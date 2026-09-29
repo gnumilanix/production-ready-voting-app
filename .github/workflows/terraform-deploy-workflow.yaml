@@ -1,10 +1,9 @@
+name: deploy-terraform
 on:
-    push:
-        branches:
-            - main
-    pull_request:
-        branches:
-            - main
+    workflow_run:
+        workflows: ["bootstrap-terraform"]
+        types:
+            - completed
     workflow_dispatch:
 
 permissions:
@@ -14,8 +13,9 @@ permissions:
 env:
     TF_VAR_aws_region: ${{ vars.AWS_REGION }}
     TF_VAR_state_bucket_name: ${{ vars.STATE_BUCKET_NAME }}
+
 jobs:
-    bootstrap-validate:
+    validate:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code
@@ -25,13 +25,13 @@ jobs:
               uses: hashicorp/setup-terraform@v4
 
             - name: Terraform Init
-              run: terraform -chdir=terraform/bootstrap init -backend=false
+              run: terraform -chdir=terraform/deploy init -backend=false
 
             - name: Terraform Validate
-              run: terraform -chdir=terraform/bootstrap validate
-    bootstrap-plan:
+              run: terraform -chdir=terraform/deploy validate
+    plan:
         runs-on: ubuntu-latest
-        needs: [bootstrap-validate]
+        needs: [validate]
         steps:
             - name: Checkout Code
               uses: actions/checkout@v7
@@ -46,20 +46,20 @@ jobs:
               uses: hashicorp/setup-terraform@v4
 
             - name: Terraform Init
-              run: terraform -chdir=terraform/bootstrap init
+              run: terraform -chdir=terraform/deploy init -backend-config=backend.hcl
 
             - name: Terraform Plan
-              run: terraform -chdir=terraform/bootstrap plan -out=tfplan
+              run: terraform -chdir=terraform/deploy plan -out=tfplan
 
             - name: Upload Plan Artifact
               uses: actions/upload-artifact@v7
               with:
-                  name: tfplan-bootstrap
-                  path: terraform/bootstrap/tfplan
+                  name: tfplan-deploy
+                  path: terraform/deploy/tfplan
                   retention-days: 1
-    bootstrap-deploy:
+    deploy:
         runs-on: ubuntu-latest
-        needs: [bootstrap-plan]
+        needs: [plan]
         environment: production
         steps:
             - name: Checkout Code
@@ -75,13 +75,13 @@ jobs:
               uses: hashicorp/setup-terraform@v4
 
             - name: Terraform Init
-              run: terraform -chdir=terraform/bootstrap init
+              run: terraform -chdir=terraform/deploy init -backend-config=backend.hcl
 
             - name: Download Plan Artifact
               uses: actions/download-artifact@v7
               with:
-                  name: tfplan-bootstrap
-                  path: terraform/bootstrap/
+                  name: tfplan-deploy
+                  path: terraform/deploy/
 
             - name: Terraform Apply
-              run: terraform -chdir=terraform/bootstrap apply -auto-approve tfplan
+              run: terraform -chdir=terraform/deploy apply -auto-approve tfplan
