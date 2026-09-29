@@ -12,6 +12,10 @@ permissions:
   contents: read
   id-token: write
 
+defaults:
+  run:
+    working-directory: terraform/deploy
+
 env:
   TF_VAR_aws_region: ${{ vars.AWS_REGION }}
   TF_VAR_state_bucket_name: ${{ vars.STATE_BUCKET_NAME }}
@@ -26,10 +30,10 @@ jobs:
         uses: hashicorp/setup-terraform@v4
 
       - name: Terraform Init
-        run: terraform -chdir=terraform/bootstrap init -backend=false
+        run: terraform init -backend=false
 
       - name: Terraform Validate
-        run: terraform -chdir=terraform/bootstrap validate
+        run: terraform validate
   plan:
     runs-on: ubuntu-latest
     needs: [validate]
@@ -48,7 +52,7 @@ jobs:
 
       - name: Terraform Init
         run: >-
-          terraform -chdir=terraform/bootstrap init
+          terraform init
           -backend-config="bucket=${{ vars.STATE_BUCKET_NAME }}"
           -backend-config="key=bootstrap/terraform.tfstate"
           -backend-config="region=${{ vars.AWS_REGION }}"
@@ -56,7 +60,7 @@ jobs:
           -backend-config="kms_key_id=arn:aws:kms:${{ vars.AWS_REGION }}:365020425296:alias/voting-app-terraform-state"
 
       - name: Terraform Plan
-        run: terraform -chdir=terraform/bootstrap plan -out=tfplan
+        run: terraform plan -out=tfplan
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v7
@@ -83,7 +87,7 @@ jobs:
 
       - name: Terraform Init
         run: >-
-          terraform -chdir=terraform/bootstrap init
+          terraform init
           -backend-config="bucket=${{ vars.STATE_BUCKET_NAME }}"
           -backend-config="key=bootstrap/terraform.tfstate"
           -backend-config="region=${{ vars.AWS_REGION }}"
@@ -97,4 +101,4 @@ jobs:
           path: terraform/bootstrap/
 
       - name: Terraform Apply
-        run: terraform -chdir=terraform/bootstrap apply -auto-approve tfplan
+        run: terraform apply -auto-approve tfplan
