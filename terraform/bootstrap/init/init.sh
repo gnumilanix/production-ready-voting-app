@@ -1,3 +1,7 @@
+aws iam create-open-id-connect-provider \
+  --url https://token.actions.githubusercontent.com \
+  --client-id-list sts.amazonaws.com
+  
 aws iam create-policy \
   --policy-name GitHubTerraformS3BackendPolicy \
   --policy-document file://backend-policy.json
