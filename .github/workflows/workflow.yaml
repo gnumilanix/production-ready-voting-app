@@ -22,7 +22,7 @@ jobs:
               uses: hashicorp/setup-terraform@v4
 
             - name: Terraform Init
-              run: terraform init -chdir=terraform/bootstrap -backend=false
+              run: terraform -chdir=terraform/bootstrap init -backend=false
 
             - name: Terraform Validate
               run: terraform -chdir=terraform/bootstrap validate
@@ -43,7 +43,7 @@ jobs:
               uses: hashicorp/setup-terraform@v4
 
             - name: Terraform Init
-              run: terraform init -chdir=terraform/bootstrap
+              run: terraform -chdir=terraform/bootstrap init
 
             - name: Terraform Plan
               run: terraform -chdir=terraform/bootstrap plan -out=tfplan
@@ -72,7 +72,7 @@ jobs:
               uses: hashicorp/setup-terraform@v4
 
             - name: Terraform Init
-              run: terraform init -chdir=terraform/bootstrap
+              run: terraform -chdir=terraform/bootstrap init
 
             - name: Download Plan Artifact
               uses: actions/download-artifact@v7
