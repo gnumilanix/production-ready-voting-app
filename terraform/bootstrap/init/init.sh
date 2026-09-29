@@ -21,3 +21,7 @@ aws iam create-role \
 aws iam attach-role-policy \
   --role-name GitHubActionsTerraformRole \
   --policy-arn arn:aws:iam::365020425296:policy/GitHubTerraformS3BackendPolicy
+
+aws s3api create-bucket \
+  --bucket flamingo-voting-app-tfstate \
+  --region us-east-1

@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
   contents: read
+  id-token: write
 
 env:
   TF_VAR_aws_region: ${{ vars.AWS_REGION }}

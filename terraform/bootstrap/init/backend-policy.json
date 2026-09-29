@@ -7,7 +7,7 @@
 			"Action": [
 				"s3:ListBucket"
 			],
-			"Resource": "arn:aws:s3:::production-ready-voting-app"
+			"Resource": "arn:aws:s3:::flamingo-voting-app-tfstate"
 		},
 		{
 			"Sid": "ReadWriteAndLockState",
@@ -18,8 +18,8 @@
 				"s3:DeleteObject"
 			],
 			"Resource": [
-				"arn:aws:s3:::production-ready-voting-app/*.tfstate",
-				"arn:aws:s3:::production-ready-voting-app/*.tflock"
+				"arn:aws:s3:::flamingo-voting-app-tfstate/*.tfstate",
+				"arn:aws:s3:::flamingo-voting-app-tfstate/*.tflock"
 			]
 		},
 		{
@@ -38,6 +38,16 @@
 				"kms:ListAliases"
 			],
 			"Resource": "*"
+		},
+		{
+			"Sid": "UseTerraformStateKmsKey",
+			"Effect": "Allow",
+			"Action": [
+				"kms:Encrypt",
+				"kms:Decrypt",
+				"kms:GenerateDataKey"
+			],
+			"Resource": "arn:aws:kms:us-east-1:365020425296:key/67f757f6-dccb-45ac-b66d-1b19d32a2bcf"
 		},
 		{
 			"Sid": "AllowS3Creation",
