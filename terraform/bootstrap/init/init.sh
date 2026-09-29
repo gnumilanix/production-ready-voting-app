@@ -25,3 +25,7 @@ aws iam attach-role-policy \
 aws s3api create-bucket \
   --bucket flamingo-voting-app-tfstate \
   --region us-east-1
+
+aws iam attach-user-policy \
+  --user-name terraform-user \
+  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
