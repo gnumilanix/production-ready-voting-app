@@ -14,7 +14,7 @@ permissions:
 
 defaults:
   run:
-    working-directory: terraform/deploy
+    working-directory: terraform/bootstrap
 
 env:
   TF_VAR_aws_region: ${{ vars.AWS_REGION }}

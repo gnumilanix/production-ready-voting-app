@@ -16,7 +16,7 @@ env:
 
 defaults:
   run:
-    working-directory: terraform/bootstrap
+    working-directory: terraform/deploy
 
 jobs:
     validate:
