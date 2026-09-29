@@ -1,26 +1,53 @@
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "ListBucketContents",
-      "Effect": "Allow",
-      "Action": [
-        "s3:ListBucket"
-      ],
-      "Resource": "arn:aws:s3:::production-ready-voting-app"
-    },
-    {
-      "Sid": "ReadWriteAndLockState",
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::production-ready-voting-app/*.tfstate",
-        "arn:aws:s3:::production-ready-voting-app/*.tflock"
-      ]
-    }
-  ]
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "ListBucketContents",
+			"Effect": "Allow",
+			"Action": [
+				"s3:ListBucket"
+			],
+			"Resource": "arn:aws:s3:::production-ready-voting-app"
+		},
+		{
+			"Sid": "ReadWriteAndLockState",
+			"Effect": "Allow",
+			"Action": [
+				"s3:GetObject",
+				"s3:PutObject",
+				"s3:DeleteObject"
+			],
+			"Resource": [
+				"arn:aws:s3:::production-ready-voting-app/*.tfstate",
+				"arn:aws:s3:::production-ready-voting-app/*.tflock"
+			]
+		},
+		{
+			"Sid": "AllowKMSRuntime",
+			"Effect": "Allow",
+			"Action": [
+				"kms:CreateKey",
+				"kms:TagResource",
+				"kms:DescribeKey",
+				"kms:ScheduleKeyDeletion",
+				"kms:EnableKeyRotation",
+				"kms:GetKeyRotationStatus"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "AllowS3Creation",
+			"Effect": "Allow",
+			"Action": [
+				"s3:CreateBucket",
+				"s3:PutBucketVersioning",
+				"s3:PutEncryptionConfiguration",
+				"s3:PutBucketPublicAccessBlock",
+				"s3:PutBucketPolicy",
+				"s3:GetBucketLocation",
+				"s3:ListBucket"
+			],
+			"Resource": "*"
+		}
+	]
 }
