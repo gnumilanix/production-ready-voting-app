@@ -47,7 +47,7 @@ jobs:
               uses: hashicorp/setup-terraform@v4
 
             - name: Terraform Init
-              run: terraform -chdir=terraform/deploy init -backend-config=terraform/deploy/backend.hcl
+              run: terraform -chdir=terraform/deploy init -backend-config=backend.hcl
 
             - name: Terraform Plan
               run: terraform -chdir=terraform/deploy plan -out=tfplan
@@ -76,7 +76,7 @@ jobs:
               uses: hashicorp/setup-terraform@v4
 
             - name: Terraform Init
-              run: terraform -chdir=terraform/deploy init -backend-config=terraform/deploy/backend.hcl
+              run: terraform -chdir=terraform/deploy init -backend-config=backend.hcl
 
             - name: Download Plan Artifact
               uses: actions/download-artifact@v7
