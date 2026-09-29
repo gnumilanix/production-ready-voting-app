@@ -14,8 +14,8 @@
         },
         "StringLike": {
           "token.actions.githubusercontent.com:sub": [
-            "repo:gnumilanix/production-ready-voting-app:ref:refs/heads/main",
-            "repo:gnumilanix/production-ready-voting-app:environment:production"
+           "repo:gnumilanix*/production-ready-voting-app*:ref:refs/heads/main",
+		   "repo:gnumilanix*/production-ready-voting-app*:environment:production"
           ]
         }
       }
