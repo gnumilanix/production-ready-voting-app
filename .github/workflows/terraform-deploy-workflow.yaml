@@ -1,10 +1,13 @@
 name: deploy-terraform
 on:
-    workflow_run:
-        workflows: ["bootstrap-terraform"]
-        types:
-            - completed
-    workflow_dispatch:
+    # workflow_run:
+    #     workflows: ["bootstrap-terraform"]
+    #     types:
+    #         - completed
+    # workflow_dispatch:
+   push:
+    branches:
+      - main     
 
 permissions:
     id-token: write
@@ -16,7 +19,7 @@ env:
 
 jobs:
     validate:
-        if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+        # if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code
@@ -48,7 +51,9 @@ jobs:
 
             - name: Terraform Init
               run: |
+                ls
                 cd terraform/deploy
+                ls
                 terraform init -backend-config=backend.hcl
 
             - name: Terraform Plan
