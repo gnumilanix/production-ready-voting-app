@@ -31,7 +31,11 @@
 				"kms:DescribeKey",
 				"kms:ScheduleKeyDeletion",
 				"kms:EnableKeyRotation",
-				"kms:GetKeyRotationStatus"
+				"kms:GetKeyRotationStatus",
+				"kms:ListResourceTags",
+				"kms:GetKeyPolicy",
+				"kms:CreateAlias",
+				"kms:ListAliases"
 			],
 			"Resource": "*"
 		},
@@ -39,15 +43,12 @@
 			"Sid": "AllowS3Creation",
 			"Effect": "Allow",
 			"Action": [
-				"s3:CreateBucket",
-				"s3:PutBucketVersioning",
-				"s3:PutEncryptionConfiguration",
-				"s3:PutBucketPublicAccessBlock",
-				"s3:PutBucketPolicy",
-				"s3:GetBucketLocation",
-				"s3:ListBucket"
+				"s3:*"
 			],
-			"Resource": "*"
+			"Resource": [
+        "arn:aws:s3:::flamingo-voting-app-tfstate",
+        "arn:aws:s3:::flamingo-voting-app-tfstate/*"
+      ]
 		}
 	]
 }
