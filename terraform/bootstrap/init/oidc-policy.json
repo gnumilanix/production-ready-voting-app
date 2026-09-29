@@ -1,0 +1,19 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "GitHubActionsAssumeRole",
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::365020425296:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+          "token.actions.githubusercontent.com:sub": "repo:gnumilanix/production-ready-voting-app:ref:refs/heads/main"
+        }
+      }
+    }
+  ]
+}
