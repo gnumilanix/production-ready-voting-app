@@ -51,6 +51,7 @@ jobs:
 
             - name: Terraform Init
               run: |
+                cd terraform/deploy
                 ls
                 terraform init -backend-config=backend.hcl
 
