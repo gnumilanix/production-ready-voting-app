@@ -11,7 +11,7 @@ resource "aws_kms_key" "state" {
 }
 
 resource "aws_kms_alias" "state" {
-  name          = "alias/voting-app-terraform-state"
+  name          = "alias/prod-voting-app-terraform-state"
   target_key_id = aws_kms_key.state.key_id
 }
 
