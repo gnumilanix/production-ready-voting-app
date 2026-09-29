@@ -1,13 +1,10 @@
 name: deploy-terraform
 on:
-    # workflow_run:
-    #     workflows: ["bootstrap-terraform"]
-    #     types:
-    #         - completed
-    # workflow_dispatch:
-   push:
-    branches:
-      - main     
+    workflow_run:
+        workflows: ["bootstrap-terraform"]
+        types:
+            - completed
+    workflow_dispatch:
 
 permissions:
     id-token: write
@@ -19,7 +16,7 @@ env:
 
 jobs:
     validate:
-        # if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code
@@ -51,9 +48,11 @@ jobs:
 
             - name: Terraform Init
               run: |
-                cd terraform/deploy
-                ls
-                terraform init -backend-config=backend.hcl
+                terraform init \
+                    -backend-config="bucket=${{ vars.STATE_BUCKET_NAME }}" \
+                    -backend-config="key=deploy/terraform.tfstate" \
+                    -backend-config="region=${{ vars.AWS_REGION }}" \
+                    -backend-config="use_lockfile=true"
 
             - name: Terraform Plan
               run: terraform -chdir=terraform/deploy plan -out=tfplan
@@ -83,8 +82,11 @@ jobs:
 
             - name: Terraform Init
               run: |
-                cd terraform/deploy
-                terraform init -backend-config=backend.hcl
+                terraform init \
+                    -backend-config="bucket=${{ vars.STATE_BUCKET_NAME }}" \
+                    -backend-config="key=deploy/terraform.tfstate" \
+                    -backend-config="region=${{ vars.AWS_REGION }}" \
+                    -backend-config="use_lockfile=true"
 
             - name: Download Plan Artifact
               uses: actions/download-artifact@v7
