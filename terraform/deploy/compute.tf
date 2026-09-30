@@ -2,6 +2,50 @@ data "aws_ssm_parameter" "amazon_linux_2023" {
   name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
 }
 
+data "aws_caller_identity" "current" {}
+
+locals {
+  eks_oidc_issuer = trimprefix(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://")
+
+  pod_identity_trust_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "pods.eks.amazonaws.com"
+      }
+      Action = ["sts:AssumeRole", "sts:TagSession"]
+      Condition = {
+        StringEquals = {
+          "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+        }
+        ArnEquals = {
+          "aws:SourceArn" = aws_eks_cluster.main.arn
+        }
+      }
+    }]
+  })
+
+  pod_identity_role_names = toset([
+    "adot-container-logs",
+    "adot-otlp-ingest",
+    "adot-prom-metrics",
+    "argocd",
+    "ebs-csi",
+    "vpc-cni",
+    "external-dns",
+    "prometheus-exporter",
+    "karpenter",
+    "vault"
+  ])
+
+  ec2_role_names = {
+    eks_node                        = "${var.name}-eks-node-role"
+    karpenter_node_instance_profile = "${var.name}-karpenter-node-instance-profile-role"
+    karpenter_node                  = "${var.name}-karpenter-node-role"
+  }
+}
+
 resource "aws_iam_role" "jump_server" {
   name = "voting-app-jump-server-role"
 
@@ -43,6 +87,39 @@ resource "aws_iam_role" "eks_cluster" {
 resource "aws_iam_role_policy_attachment" "eks_cluster" {
   role       = aws_iam_role.eks_cluster.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+resource "aws_iam_role" "pod_identity" {
+  for_each = local.pod_identity_role_names
+
+  name               = "${var.name}-${each.key}-pod-identity-role"
+  assume_role_policy = local.pod_identity_trust_policy
+
+  tags = {
+    Name      = "${var.name}-${each.key}-pod-identity-role"
+    Component = each.key
+  }
+}
+
+resource "aws_iam_role" "ec2_node" {
+  for_each = local.ec2_role_names
+
+  name = each.value
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+
+  tags = {
+    Name      = each.value
+    Component = each.key
+  }
 }
 
 resource "aws_iam_instance_profile" "jump_server" {
@@ -161,4 +238,162 @@ resource "aws_eks_cluster" "main" {
   }
 
   depends_on = [aws_iam_role_policy_attachment.eks_cluster]
+}
+
+resource "aws_iam_openid_connect_provider" "eks" {
+  url            = aws_eks_cluster.main.identity[0].oidc[0].issuer
+  client_id_list = ["sts.amazonaws.com"]
+
+  tags = {
+    Name = "${var.name}-eks-oidc-provider"
+  }
+}
+
+resource "aws_iam_role" "aws_load_balancer_controller" {
+  name = "${var.name}-aws-load-balancer-controller-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.eks.arn
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${local.eks_oidc_issuer}:aud" = "sts.amazonaws.com"
+          "${local.eks_oidc_issuer}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+        }
+      }
+    }]
+  })
+
+  tags = {
+    Name      = "${var.name}-aws-load-balancer-controller-role"
+    Component = "aws-load-balancer-controller"
+  }
+}
+
+resource "aws_iam_role_policy" "jump_server_eks_management" {
+  name = "${var.name}-jump-server-eks-management"
+  role = aws_iam_role.jump_server.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "EKSManagement"
+        Effect = "Allow"
+        Action = [
+          "eks:DescribeCluster",
+          "eks:ListClusters",
+          "eks:DescribeClusterVersions",
+          "eks:DescribeNodegroup",
+          "eks:UpdateNodegroupVersion",
+          "eks:DescribeUpdate",
+          "eks:ListUpdates",
+          "eks:DescribeAddon"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["eks:CreatePodIdentityAssociation"]
+        Resource = aws_eks_cluster.main.arn
+      },
+      {
+        Effect = "Allow"
+        Action = ["iam:PassRole"]
+        Resource = [
+          aws_iam_role.pod_identity["argocd"].arn,
+          aws_iam_role.pod_identity["karpenter"].arn,
+          aws_iam_role.pod_identity["vault"].arn
+        ]
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = "pods.eks.amazonaws.com"
+          }
+        }
+      },
+      {
+        Sid    = "AllowEKSUpdateTracking"
+        Effect = "Allow"
+        Action = [
+          "eks:DescribeUpdate",
+          "eks:ListUpdates"
+        ]
+        Resource = [
+          aws_eks_cluster.main.arn,
+          format("arn:aws:eks:%s:%s:nodegroup/%s/*", var.aws_region, data.aws_caller_identity.current.account_id, aws_eks_cluster.main.name),
+          format("arn:aws:eks:%s:%s:nodegroup/%s/*/*", var.aws_region, data.aws_caller_identity.current.account_id, aws_eks_cluster.main.name)
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole",
+          "iam:AttachRolePolicy"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:ListOpenIDConnectProviders",
+          "iam:GetOpenIDConnectProvider",
+          "iam:CreateOpenIDConnectProvider",
+          "iam:GetRole",
+          "iam:TagRole"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid      = "AllowOIDCTagging"
+        Effect   = "Allow"
+        Action   = ["iam:TagOpenIDConnectProvider"]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/*"
+      },
+      {
+        Sid      = "AllowEKSTagging"
+        Effect   = "Allow"
+        Action   = ["eks:TagResource"]
+        Resource = aws_eks_cluster.main.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "codecommit:GitPull",
+          "codecommit:Get*",
+          "codecommit:BatchGet*",
+          "codecommit:List*"
+        ]
+        Resource = "arn:aws:codecommit:${var.aws_region}:${data.aws_caller_identity.current.account_id}:playground"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudformation:ListStacks",
+          "cloudformation:DescribeStacks",
+          "cloudformation:GetTemplate",
+          "cloudformation:UpdateStack",
+          "cloudformation:DescribeStackEvents",
+          "cloudformation:DescribeStackResources"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowEC2AndAutoscalingForNodegroup"
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeLaunchTemplates",
+          "ec2:DescribeLaunchTemplateVersions",
+          "autoscaling:DescribeAutoScalingGroups",
+          "autoscaling:DescribeScheduledActions",
+          "autoscaling:UpdateAutoScalingGroup"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
