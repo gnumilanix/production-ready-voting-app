@@ -6,9 +6,66 @@
       "Effect": "Allow",
       "Action": [
         "sts:GetCallerIdentity",
-        "ec2:DescribeAvailabilityZones"
+        "ec2:DescribeAvailabilityZones",
+        "ec2:DescribeVpcs",
+        "ec2:DescribeVpcAttribute",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeInternetGateways",
+        "ec2:DescribeRouteTables"
       ],
       "Resource": "*"
+    },
+    {
+      "Sid": "CreateVpcAndInternetGateway",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateVpc",
+        "ec2:ModifyVpcAttribute",
+        "ec2:CreateInternetGateway",
+        "ec2:AttachInternetGateway"
+      ],
+      "Resource": [
+        "arn:aws:ec2:us-east-1:365020425296:vpc/*",
+        "arn:aws:ec2:us-east-1:365020425296:internet-gateway/*"
+      ]
+    },
+    {
+      "Sid": "CreateSubnetsAndRouteTables",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateSubnet",
+        "ec2:ModifySubnetAttribute",
+        "ec2:CreateRouteTable"
+      ],
+      "Resource": [
+        "arn:aws:ec2:us-east-1:365020425296:subnet/*",
+        "arn:aws:ec2:us-east-1:365020425296:route-table/*"
+      ]
+    },
+    {
+      "Sid": "CreateRoutesAndAssociations",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateRoute",
+        "ec2:AssociateRouteTable"
+      ],
+      "Resource": [
+        "arn:aws:ec2:us-east-1:365020425296:route-table/*",
+        "arn:aws:ec2:us-east-1:365020425296:subnet/*",
+        "arn:aws:ec2:us-east-1:365020425296:vpc/*",
+        "arn:aws:ec2:us-east-1:365020425296:internet-gateway/*"
+      ]
+    },
+    {
+      "Sid": "TagVpcNetworkResources",
+      "Effect": "Allow",
+      "Action": "ec2:CreateTags",
+      "Resource": [
+        "arn:aws:ec2:us-east-1:365020425296:vpc/*",
+        "arn:aws:ec2:us-east-1:365020425296:internet-gateway/*",
+        "arn:aws:ec2:us-east-1:365020425296:subnet/*",
+        "arn:aws:ec2:us-east-1:365020425296:route-table/*"
+      ]
     },
     {
       "Sid": "ReadDeployStateBucket",
