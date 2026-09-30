@@ -84,6 +84,12 @@ locals {
     karpenter_node_instance_profile = "${var.name}-karpenter-node-instance-profile-role"
     karpenter_node                  = "${var.name}-karpenter-node-role"
   }
+
+  eks_node_policy_arns = {
+    worker_node = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+    cni         = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+    ecr_pull    = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+  }
 }
 
 resource "aws_iam_role" "jump_server" {
@@ -162,14 +168,11 @@ resource "aws_iam_role" "ec2_node" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "eks_node_worker" {
-  role       = aws_iam_role.ec2_node["eks_node"].name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-}
+resource "aws_iam_role_policy_attachment" "eks_node" {
+  for_each = local.eks_node_policy_arns
 
-resource "aws_iam_role_policy_attachment" "eks_node_ecr" {
   role       = aws_iam_role.ec2_node["eks_node"].name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+  policy_arn = each.value
 }
 
 resource "aws_iam_instance_profile" "jump_server" {
@@ -342,10 +345,7 @@ resource "aws_eks_node_group" "spot" {
     Name = "${var.name}-${each.key}"
   }
 
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_node_worker,
-    aws_iam_role_policy_attachment.eks_node_ecr
-  ]
+  depends_on = [aws_iam_role_policy_attachment.eks_node]
 }
 
 data "aws_eks_addon_version" "managed" {
@@ -367,7 +367,10 @@ resource "aws_iam_role_policy_attachment" "ebs_csi" {
 }
 
 resource "aws_eks_addon" "managed" {
-  for_each = setsubtract(local.eks_addon_names, toset(keys(local.eks_addons_with_pod_identity)))
+  for_each = setsubtract(
+    local.eks_addon_names,
+    setunion(toset(keys(local.eks_addons_with_pod_identity)), toset(["coredns"]))
+  )
 
   cluster_name  = aws_eks_cluster.main.name
   addon_name    = each.key
@@ -375,6 +378,17 @@ resource "aws_eks_addon" "managed" {
 
   tags = {
     Name = "${var.name}-${each.key}"
+  }
+
+}
+
+resource "aws_eks_addon" "coredns" {
+  cluster_name  = aws_eks_cluster.main.name
+  addon_name    = "coredns"
+  addon_version = data.aws_eks_addon_version.managed["coredns"].version
+
+  tags = {
+    Name = "${var.name}-coredns"
   }
 
   depends_on = [aws_eks_node_group.spot["spot-small-stateful"]]
@@ -399,7 +413,6 @@ resource "aws_eks_addon" "with_pod_identity" {
   }
 
   depends_on = [
-    aws_eks_node_group.spot["spot-small-stateful"],
     aws_eks_addon.managed["eks-pod-identity-agent"],
     aws_iam_role_policy_attachment.vpc_cni,
     aws_iam_role_policy_attachment.ebs_csi
