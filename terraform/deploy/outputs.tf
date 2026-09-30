@@ -87,3 +87,8 @@ output "aws_load_balancer_controller_role_arn" {
   description = "IAM role ARN assumed by the AWS Load Balancer Controller service account."
   value       = aws_iam_role.aws_load_balancer_controller.arn
 }
+
+output "controller_installer_role_arn" {
+  description = "IAM role assumed by the jump server to install the AWS Load Balancer Controller."
+  value       = aws_iam_role.controller_installer.arn
+}

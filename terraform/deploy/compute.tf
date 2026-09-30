@@ -306,9 +306,60 @@ resource "aws_eks_access_entry" "jump_server" {
 resource "aws_eks_access_policy_association" "jump_server_view" {
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = aws_iam_role.jump_server.arn
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminViewPolicy"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
 
   depends_on = [aws_eks_access_entry.jump_server]
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
+resource "aws_iam_role" "controller_installer" {
+  name = "${var.name}-controller-installer-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        AWS = aws_iam_role.jump_server.arn
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+
+  tags = {
+    Name = "${var.name}-controller-installer-role"
+  }
+}
+
+resource "aws_iam_role_policy" "controller_installer" {
+  name = "${var.name}-controller-installer"
+  role = aws_iam_role.controller_installer.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["eks:DescribeCluster"]
+      Resource = aws_eks_cluster.main.arn
+    }]
+  })
+}
+
+resource "aws_eks_access_entry" "controller_installer" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_iam_role.controller_installer.arn
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "controller_installer_admin" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_iam_role.controller_installer.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  depends_on = [aws_eks_access_entry.controller_installer]
 
   access_scope {
     type = "cluster"
@@ -715,6 +766,12 @@ resource "aws_iam_role_policy" "jump_server_eks_management" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      {
+        Sid      = "AssumeControllerInstallerRole"
+        Effect   = "Allow"
+        Action   = ["sts:AssumeRole"]
+        Resource = aws_iam_role.controller_installer.arn
+      },
       {
         Sid    = "EKSManagement"
         Effect = "Allow"
