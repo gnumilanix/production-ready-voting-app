@@ -129,6 +129,9 @@ resource "aws_instance" "jump_server" {
   key_name                    = aws_key_pair.jump_server.key_name
   iam_instance_profile        = aws_iam_instance_profile.jump_server.name
   associate_public_ip_address = true
+  user_data = templatefile("${path.module}/scripts/bootstrap.sh", {
+    cluster_name = var.name
+  })
 
   metadata_options {
     http_tokens = "required"
