@@ -60,6 +60,25 @@ locals {
     }
   }
 
+  eks_node_groups = {
+    "spot-small-general" = {
+      desired_size = 2
+      min_size     = 1
+      max_size     = 4
+      taints       = []
+    }
+    "spot-small-stateful" = {
+      desired_size = 1
+      min_size     = 1
+      max_size     = 2
+      taints = [{
+        key    = "workload-type"
+        value  = "spot-stateful"
+        effect = "PREFER_NO_SCHEDULE"
+      }]
+    }
+  }
+
   ec2_role_names = {
     eks_node                        = "${var.name}-eks-node-role"
     karpenter_node_instance_profile = "${var.name}-karpenter-node-instance-profile-role"
@@ -141,6 +160,16 @@ resource "aws_iam_role" "ec2_node" {
     Name      = each.value
     Component = each.key
   }
+}
+
+resource "aws_iam_role_policy_attachment" "eks_node_worker" {
+  role       = aws_iam_role.ec2_node["eks_node"].name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "eks_node_ecr" {
+  role       = aws_iam_role.ec2_node["eks_node"].name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
 }
 
 resource "aws_iam_instance_profile" "jump_server" {
@@ -283,6 +312,42 @@ resource "aws_eks_access_policy_association" "jump_server_view" {
   }
 }
 
+resource "aws_eks_node_group" "spot" {
+  for_each = local.eks_node_groups
+
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = each.key
+  node_role_arn   = aws_iam_role.ec2_node["eks_node"].arn
+  subnet_ids      = [for subnet in values(aws_subnet.private) : subnet.id]
+
+  capacity_type  = "SPOT"
+  instance_types = ["t3.small"]
+
+  scaling_config {
+    desired_size = each.value.desired_size
+    min_size     = each.value.min_size
+    max_size     = each.value.max_size
+  }
+
+  dynamic "taint" {
+    for_each = each.value.taints
+    content {
+      key    = taint.value.key
+      value  = taint.value.value
+      effect = taint.value.effect
+    }
+  }
+
+  tags = {
+    Name = "${var.name}-${each.key}"
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_node_worker,
+    aws_iam_role_policy_attachment.eks_node_ecr
+  ]
+}
+
 data "aws_eks_addon_version" "managed" {
   for_each = local.eks_addon_names
 
@@ -311,6 +376,8 @@ resource "aws_eks_addon" "managed" {
   tags = {
     Name = "${var.name}-${each.key}"
   }
+
+  depends_on = [aws_eks_node_group.spot["spot-small-stateful"]]
 }
 
 resource "aws_eks_addon" "with_pod_identity" {
@@ -332,6 +399,7 @@ resource "aws_eks_addon" "with_pod_identity" {
   }
 
   depends_on = [
+    aws_eks_node_group.spot["spot-small-stateful"],
     aws_eks_addon.managed["eks-pod-identity-agent"],
     aws_iam_role_policy_attachment.vpc_cni,
     aws_iam_role_policy_attachment.ebs_csi
