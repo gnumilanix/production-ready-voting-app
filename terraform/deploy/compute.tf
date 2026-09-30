@@ -227,7 +227,7 @@ resource "aws_eks_cluster" "main" {
   version  = "1.33"
 
   access_config {
-    authentication_mode = "API_AND_CONFIG_MAP"
+    authentication_mode = "API"
   }
 
   vpc_config {
@@ -254,6 +254,8 @@ resource "aws_eks_access_policy_association" "jump_server_view" {
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = aws_iam_role.jump_server.arn
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+
+  depends_on = [aws_eks_access_entry.jump_server]
 
   access_scope {
     type = "cluster"
