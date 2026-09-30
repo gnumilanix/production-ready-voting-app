@@ -39,6 +39,27 @@ locals {
     "vault"
   ])
 
+  eks_addon_names = toset([
+    "vpc-cni",
+    "coredns",
+    "kube-proxy",
+    "metrics-server",
+    "eks-node-monitoring-agent",
+    "aws-ebs-csi-driver",
+    "eks-pod-identity-agent"
+  ])
+
+  eks_addons_with_pod_identity = {
+    "vpc-cni" = {
+      role_key        = "vpc-cni"
+      service_account = "aws-node"
+    }
+    "aws-ebs-csi-driver" = {
+      role_key        = "ebs-csi"
+      service_account = "ebs-csi-controller-sa"
+    }
+  }
+
   ec2_role_names = {
     eks_node                        = "${var.name}-eks-node-role"
     karpenter_node_instance_profile = "${var.name}-karpenter-node-instance-profile-role"
@@ -260,6 +281,61 @@ resource "aws_eks_access_policy_association" "jump_server_view" {
   access_scope {
     type = "cluster"
   }
+}
+
+data "aws_eks_addon_version" "managed" {
+  for_each = local.eks_addon_names
+
+  addon_name         = each.key
+  kubernetes_version = aws_eks_cluster.main.version
+  most_recent        = true
+}
+
+resource "aws_iam_role_policy_attachment" "vpc_cni" {
+  role       = aws_iam_role.pod_identity["vpc-cni"].name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi" {
+  role       = aws_iam_role.pod_identity["ebs-csi"].name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicyV2"
+}
+
+resource "aws_eks_addon" "managed" {
+  for_each = setsubtract(local.eks_addon_names, toset(keys(local.eks_addons_with_pod_identity)))
+
+  cluster_name  = aws_eks_cluster.main.name
+  addon_name    = each.key
+  addon_version = data.aws_eks_addon_version.managed[each.key].version
+
+  tags = {
+    Name = "${var.name}-${each.key}"
+  }
+}
+
+resource "aws_eks_addon" "with_pod_identity" {
+  for_each = local.eks_addons_with_pod_identity
+
+  cluster_name                = aws_eks_cluster.main.name
+  addon_name                  = each.key
+  addon_version               = data.aws_eks_addon_version.managed[each.key].version
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "PRESERVE"
+
+  pod_identity_association {
+    role_arn        = aws_iam_role.pod_identity[each.value.role_key].arn
+    service_account = each.value.service_account
+  }
+
+  tags = {
+    Name = "${var.name}-${each.key}"
+  }
+
+  depends_on = [
+    aws_eks_addon.managed["eks-pod-identity-agent"],
+    aws_iam_role_policy_attachment.vpc_cni,
+    aws_iam_role_policy_attachment.ebs_csi
+  ]
 }
 
 resource "aws_iam_openid_connect_provider" "eks" {
