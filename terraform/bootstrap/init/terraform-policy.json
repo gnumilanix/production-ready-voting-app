@@ -1,0 +1,39 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadDeployPlan",
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity",
+        "ec2:DescribeAvailabilityZones"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ReadDeployStateBucket",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::flamingo-voting-app-tfstate"
+    },
+    {
+      "Sid": "ReadDeployState",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:GetObjectVersion",
+        "s3:ListMultipartUploadParts"
+      ],
+      "Resource": "arn:aws:s3:::flamingo-voting-app-tfstate/deploy/terraform.tfstate"
+    },
+    {
+      "Sid": "ManageDeployStateLock",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListMultipartUploadParts",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::flamingo-voting-app-tfstate/deploy/terraform.tfstate.tflock"
+    }
+  ]
+}
