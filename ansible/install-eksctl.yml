@@ -1,0 +1,43 @@
+---
+- name: Install eksctl on the Terraform jump server
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    eksctl_archive: /tmp/eksctl_Linux_amd64.tar.gz
+    eksctl_extract_dir: /tmp/eksctl-linux-amd64
+  tasks:
+    - name: Check for eksctl
+      ansible.builtin.stat:
+        path: /usr/local/bin/eksctl
+      register: eksctl_binary
+
+    - name: Download eksctl release archive
+      ansible.builtin.get_url:
+        url: https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz
+        dest: "{{ eksctl_archive }}"
+        mode: "0644"
+      when: not eksctl_binary.stat.exists
+
+    - name: Create eksctl extraction directory
+      ansible.builtin.file:
+        path: "{{ eksctl_extract_dir }}"
+        state: directory
+        mode: "0755"
+      when: not eksctl_binary.stat.exists
+
+    - name: Extract eksctl
+      ansible.builtin.unarchive:
+        src: "{{ eksctl_archive }}"
+        dest: "{{ eksctl_extract_dir }}"
+        remote_src: true
+        creates: "{{ eksctl_extract_dir }}/eksctl"
+      when: not eksctl_binary.stat.exists
+
+    - name: Install eksctl binary
+      ansible.builtin.copy:
+        src: "{{ eksctl_extract_dir }}/eksctl"
+        dest: /usr/local/bin/eksctl
+        remote_src: true
+        mode: "0755"
+      when: not eksctl_binary.stat.exists

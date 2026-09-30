@@ -82,3 +82,8 @@ output "eks_cluster_endpoint" {
   description = "Private Kubernetes API endpoint for the EKS cluster."
   value       = aws_eks_cluster.main.endpoint
 }
+
+output "aws_load_balancer_controller_role_arn" {
+  description = "IAM role ARN assumed by the AWS Load Balancer Controller service account."
+  value       = aws_iam_role.aws_load_balancer_controller.arn
+}
