@@ -114,7 +114,7 @@
       "Sid": "ReadJumpServerAmi",
       "Effect": "Allow",
       "Action": "ssm:GetParameter",
-      "Resource": "arn:aws:ssm:us-east-1:365020425296:parameter/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+      "Resource": "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/*"
     },
     {
       "Sid": "ManageJumpServerCompute",
