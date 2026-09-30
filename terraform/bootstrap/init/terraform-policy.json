@@ -39,7 +39,8 @@
       ],
       "Resource": [
         "arn:aws:ec2:us-east-1:365020425296:subnet/*",
-        "arn:aws:ec2:us-east-1:365020425296:route-table/*"
+        "arn:aws:ec2:us-east-1:365020425296:route-table/*",
+        "arn:aws:ec2:us-east-1:365020425296:vpc/*"
       ]
     },
     {
