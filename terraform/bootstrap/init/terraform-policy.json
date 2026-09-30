@@ -2,11 +2,14 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "ReadDeployPlan",
+      "Sid": "ReadPlanMetadata",
       "Effect": "Allow",
       "Action": [
         "sts:GetCallerIdentity",
-        "ec2:Describe*"
+        "ec2:Describe*",
+        "eks:Describe*",
+        "eks:Get*",
+        "eks:List*"
       ],
       "Resource": "*"
     },
@@ -169,14 +172,8 @@
       "Resource": "*"
     },
     {
-      "Sid": "ManageJumpServerRoleAndProfile",
       "Effect": "Allow",
       "Action": [
-        "iam:CreateRole",
-        "iam:DeleteRole",
-        "iam:UpdateAssumeRolePolicy",
-        "iam:TagRole",
-        "iam:UntagRole",
         "iam:CreateInstanceProfile",
         "iam:DeleteInstanceProfile",
         "iam:AddRoleToInstanceProfile",
@@ -184,10 +181,7 @@
         "iam:TagInstanceProfile",
         "iam:UntagInstanceProfile"
       ],
-      "Resource": [
-        "arn:aws:iam::365020425296:role/voting-app-jump-server-role",
-        "arn:aws:iam::365020425296:instance-profile/voting-app-jump-server-profile"
-      ]
+      "Resource": "arn:aws:iam::365020425296:instance-profile/voting-app-jump-server-profile"
     },
     {
       "Sid": "PassJumpServerRoleToEc2",
@@ -214,18 +208,41 @@
       "Resource": "arn:aws:eks:us-east-1:365020425296:cluster/*"
     },
     {
-      "Sid": "ManageEksClusterRole",
       "Effect": "Allow",
       "Action": [
         "iam:CreateRole",
         "iam:DeleteRole",
-        "iam:AttachRolePolicy",
-        "iam:DetachRolePolicy",
         "iam:UpdateAssumeRolePolicy",
         "iam:TagRole",
         "iam:UntagRole"
       ],
+      "Resource": [
+        "arn:aws:iam::365020425296:role/voting-app-jump-server-role",
+        "arn:aws:iam::365020425296:role/voting-app-eks-cluster-role",
+        "arn:aws:iam::365020425296:role/voting-app-*-pod-identity-role",
+        "arn:aws:iam::365020425296:role/voting-app-eks-node-role",
+        "arn:aws:iam::365020425296:role/voting-app-karpenter-node-*",
+        "arn:aws:iam::365020425296:role/voting-app-aws-load-balancer-controller-role"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy"
+      ],
       "Resource": "arn:aws:iam::365020425296:role/voting-app-eks-cluster-role"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateOpenIDConnectProvider",
+        "iam:DeleteOpenIDConnectProvider",
+        "iam:UpdateOpenIDConnectProviderThumbprint",
+        "iam:TagOpenIDConnectProvider",
+        "iam:UntagOpenIDConnectProvider"
+      ],
+      "Resource": "arn:aws:iam::365020425296:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/*"
     },
     {
       "Sid": "PassEksClusterRole",
