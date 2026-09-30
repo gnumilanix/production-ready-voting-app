@@ -192,7 +192,8 @@
       "Resource": [
         "arn:aws:eks:us-east-1:365020425296:cluster/voting-app",
         "arn:aws:eks:us-east-1:365020425296:access-entry/voting-app/*",
-        "arn:aws:eks:us-east-1:365020425296:nodegroup/voting-app/*/*"
+        "arn:aws:eks:us-east-1:365020425296:nodegroup/voting-app/*/*",
+        "arn:aws:eks:us-east-1:365020425296:podidentityassociation/voting-app/*"
       ]
     },
     {
