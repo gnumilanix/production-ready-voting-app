@@ -1,10 +1,16 @@
 name: deploy-terraform
 on:
-    workflow_run:
-        workflows: ["bootstrap-terraform"]
-        types:
-            - completed
-    workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_run:
+      workflows: ["bootstrap-terraform"]
+      types:
+          - completed
+  workflow_dispatch:
 
 permissions:
     id-token: write
@@ -14,13 +20,17 @@ env:
     TF_VAR_aws_region: ${{ vars.AWS_REGION }}
     TF_VAR_state_bucket_name: ${{ vars.STATE_BUCKET_NAME }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
 defaults:
   run:
     working-directory: terraform/deploy
 
 jobs:
     validate:
-        if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+        # if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code
