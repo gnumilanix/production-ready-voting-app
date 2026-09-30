@@ -191,9 +191,7 @@
       ],
       "Resource": [
         "arn:aws:eks:us-east-1:365020425296:cluster/voting-app",
-        "arn:aws:eks:us-east-1:365020425296:access-entry/voting-app/*",
-        "arn:aws:eks:us-east-1:365020425296:nodegroup/voting-app/*/*",
-        "arn:aws:eks:us-east-1:365020425296:podidentityassociation/voting-app/*"
+        "arn:aws:eks:us-east-1:365020425296:*/voting-app/*"
       ]
     },
     {
@@ -205,14 +203,7 @@
         "iam:TagRole",
         "iam:UntagRole"
       ],
-      "Resource": [
-        "arn:aws:iam::365020425296:role/voting-app-jump-server-role",
-        "arn:aws:iam::365020425296:role/voting-app-eks-cluster-role",
-        "arn:aws:iam::365020425296:role/voting-app-*-pod-identity-role",
-        "arn:aws:iam::365020425296:role/voting-app-eks-node-role",
-        "arn:aws:iam::365020425296:role/voting-app-karpenter-node-*",
-        "arn:aws:iam::365020425296:role/voting-app-aws-load-balancer-controller-role"
-      ]
+      "Resource": "arn:aws:iam::365020425296:role/voting-app-*"
     },
     {
       "Effect": "Allow",
@@ -222,8 +213,22 @@
       ],
       "Resource": [
         "arn:aws:iam::365020425296:role/voting-app-eks-cluster-role",
-        "arn:aws:iam::365020425296:role/voting-app-eks-node-role"
+        "arn:aws:iam::365020425296:role/voting-app-eks-node-role",
+        "arn:aws:iam::365020425296:role/voting-app-aws-load-balancer-controller-role"
       ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreatePolicy",
+        "iam:DeletePolicy",
+        "iam:CreatePolicyVersion",
+        "iam:DeletePolicyVersion",
+        "iam:SetDefaultPolicyVersion",
+        "iam:TagPolicy",
+        "iam:UntagPolicy"
+      ],
+      "Resource": "arn:aws:iam::365020425296:policy/voting-app-aws-load-balancer-controller-policy"
     },
     {
       "Effect": "Allow",
