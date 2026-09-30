@@ -68,6 +68,11 @@ output "eks_cluster_name" {
   value       = aws_eks_cluster.main.name
 }
 
+output "eks_cluster_region" {
+  description = "AWS region hosting the EKS cluster."
+  value       = var.aws_region
+}
+
 output "eks_cluster_arn" {
   description = "ARN of the EKS cluster."
   value       = aws_eks_cluster.main.arn

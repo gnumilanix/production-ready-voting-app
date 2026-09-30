@@ -28,7 +28,7 @@
 
     - name: Generate native EKS cluster kubeconfig context
       ansible.builtin.command: >
-        aws eks update-kubeconfig --region eu-central-1 --name "{{ eks_cluster_name }}"
+        aws eks update-kubeconfig --region "{{ eks_cluster_region }}" --name "{{ eks_cluster_name }}"
       become: false
       register: kubeconfig_output
       changed_when: "'Updated context' in kubeconfig_output.stdout"

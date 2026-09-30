@@ -90,6 +90,7 @@ jobs:
         outputs:
             jump_server_ip: ${{ steps.export-tf-outputs.outputs.JUMP_SERVER_IP }}
             eks_cluster_name: ${{ steps.export-tf-outputs.outputs.EKS_CLUSTER_NAME }}
+            eks_cluster_region: ${{ steps.export-tf-outputs.outputs.EKS_CLUSTER_REGION }}
         steps:
             - name: Checkout Code
               uses: actions/checkout@v7
@@ -125,6 +126,7 @@ jobs:
               run: |
                 echo "JUMP_SERVER_IP=$(terraform output -raw jump_server_public_ip)" >> "$GITHUB_OUTPUT"
                 echo "EKS_CLUSTER_NAME=$(terraform output -raw eks_cluster_name)" >> "$GITHUB_OUTPUT"
+                echo "EKS_CLUSTER_REGION=$(terraform output -raw eks_cluster_region)" >> "$GITHUB_OUTPUT"
 
     configure:
         runs-on: ubuntu-latest
@@ -148,7 +150,5 @@ jobs:
                   key: ${{ secrets.JUMP_SERVER_PRIVATE_KEY }}
                   inventory: |
                       [jump_server]
-                      ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user
-                  options:
-                    --extra-vars eks_cluster_name=${{needs.deploy.outputs.eks_cluster_name}}
+                      ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user eks_cluster_name=${{ needs.deploy.outputs.eks_cluster_name }} eks_cluster_region=${{ needs.deploy.outputs.eks_cluster_region }}
 
