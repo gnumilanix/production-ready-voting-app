@@ -18,6 +18,7 @@
         "ec2:DescribeSecurityGroups",
         "ec2:DescribeImages",
         "ec2:DescribeInstanceTypes",
+        "ec2:DescribeTags",
         "ec2:DescribeNatGateways"
       ],
       "Resource": "*"
