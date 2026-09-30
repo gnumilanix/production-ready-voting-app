@@ -21,6 +21,30 @@ resource "aws_iam_role" "jump_server" {
   }
 }
 
+resource "aws_iam_role" "eks_cluster" {
+  name = "voting-app-eks-cluster-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "eks.amazonaws.com"
+      }
+      Action = ["sts:AssumeRole", "sts:TagSession"]
+    }]
+  })
+
+  tags = {
+    Name = "${var.name}-eks-cluster-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "eks_cluster" {
+  role       = aws_iam_role.eks_cluster.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
 resource "aws_iam_instance_profile" "jump_server" {
   name = "voting-app-jump-server-profile"
   role = aws_iam_role.jump_server.name
@@ -118,4 +142,23 @@ resource "aws_instance" "jump_server" {
   tags = {
     Name = "${var.name}-jump-server"
   }
+}
+
+resource "aws_eks_cluster" "main" {
+  name     = var.name
+  role_arn = aws_iam_role.eks_cluster.arn
+  version  = "1.33"
+
+  vpc_config {
+    subnet_ids              = [for subnet in values(aws_subnet.private) : subnet.id]
+    security_group_ids      = [aws_security_group.eks_control_plane.id]
+    endpoint_private_access = true
+    endpoint_public_access  = false
+  }
+
+  tags = {
+    Name = "${var.name}-eks"
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.eks_cluster]
 }

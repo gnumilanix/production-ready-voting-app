@@ -62,3 +62,18 @@ output "eks_control_plane_security_group_id" {
   description = "Security group ID for the future EKS control plane."
   value       = aws_security_group.eks_control_plane.id
 }
+
+output "eks_cluster_name" {
+  description = "Name of the EKS cluster."
+  value       = aws_eks_cluster.main.name
+}
+
+output "eks_cluster_arn" {
+  description = "ARN of the EKS cluster."
+  value       = aws_eks_cluster.main.arn
+}
+
+output "eks_cluster_endpoint" {
+  description = "Private Kubernetes API endpoint for the EKS cluster."
+  value       = aws_eks_cluster.main.endpoint
+}
