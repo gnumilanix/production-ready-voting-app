@@ -1,0 +1,41 @@
+---
+- name: Install Helm on the Terraform jump server
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    helm_version: v4.3.0
+    helm_archive_checksum: 86584a54def73570558f66f5111cc53dfed56689637ae32c1201205d494f54fb
+    helm_archive: "/tmp/helm-{{ helm_version }}-linux-amd64.tar.gz"
+    helm_extract_dir: "/tmp/helm-{{ helm_version }}"
+  tasks:
+    - name: Wait for the jump server to accept SSH connections
+      ansible.builtin.wait_for_connection:
+        delay: 5
+        timeout: 600
+
+    - name: Download and verify Helm
+      ansible.builtin.get_url:
+        url: "https://get.helm.sh/helm-{{ helm_version }}-linux-amd64.tar.gz"
+        dest: "{{ helm_archive }}"
+        mode: "0644"
+        checksum: "sha256:{{ helm_archive_checksum }}"
+
+    - name: Extract Helm archive
+      ansible.builtin.unarchive:
+        src: "{{ helm_archive }}"
+        dest: "{{ helm_extract_dir }}"
+        remote_src: true
+        creates: "{{ helm_extract_dir }}/linux-amd64/helm"
+
+    - name: Install Helm binary
+      ansible.builtin.copy:
+        src: "{{ helm_extract_dir }}/linux-amd64/helm"
+        dest: /usr/local/bin/helm
+        remote_src: true
+        mode: "0755"
+
+    - name: Verify Helm installation
+      ansible.builtin.command: helm version --short
+      register: helm_version_output
+      changed_when: false
