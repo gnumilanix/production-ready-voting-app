@@ -21,6 +21,12 @@
         mode: "0644"
         checksum: "sha256:{{ helm_archive_checksum }}"
 
+    - name: Create Helm extraction directory
+      ansible.builtin.file:
+        path: "{{ helm_extract_dir }}"
+        state: directory
+        mode: "0755"
+
     - name: Extract Helm archive
       ansible.builtin.unarchive:
         src: "{{ helm_archive }}"
