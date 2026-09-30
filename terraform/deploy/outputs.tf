@@ -57,3 +57,8 @@ output "jump_server_security_group_id" {
   description = "Security group ID attached to the jump server."
   value       = aws_security_group.jump_server.id
 }
+
+output "eks_control_plane_security_group_id" {
+  description = "Security group ID for the future EKS control plane."
+  value       = aws_security_group.eks_control_plane.id
+}
