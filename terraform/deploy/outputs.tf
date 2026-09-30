@@ -37,3 +37,23 @@ output "nat_gateway_public_ips" {
   description = "Public IP address of the shared NAT gateway."
   value       = aws_eip.nat.public_ip
 }
+
+output "jump_server_instance_id" {
+  description = "ID of the public jump server instance."
+  value       = aws_instance.jump_server.id
+}
+
+output "jump_server_public_ip" {
+  description = "Public IP address of the jump server."
+  value       = aws_instance.jump_server.public_ip
+}
+
+output "jump_server_key_pair_name" {
+  description = "EC2 key pair name used by the jump server."
+  value       = aws_key_pair.jump_server.key_name
+}
+
+output "jump_server_security_group_id" {
+  description = "Security group ID attached to the jump server."
+  value       = aws_security_group.jump_server.id
+}

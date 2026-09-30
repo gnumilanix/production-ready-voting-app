@@ -13,6 +13,9 @@
         "ec2:DescribeInternetGateways",
         "ec2:DescribeRouteTables",
         "ec2:DescribeAddresses",
+        "ec2:DescribeAddressesAttribute",
+        "ec2:DescribeNetworkAcls",
+        "ec2:DescribeSecurityGroups",
         "ec2:DescribeNatGateways"
       ],
       "Resource": "*"
@@ -108,6 +111,69 @@
       ]
     },
     {
+      "Sid": "ReadJumpServerAmi",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": "arn:aws:ssm:us-east-1:365020425296:parameter/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+    },
+    {
+      "Sid": "ManageJumpServerCompute",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RunInstances",
+        "ec2:TerminateInstances",
+        "ec2:DescribeInstances",
+        "ec2:DescribeInstanceAttribute",
+        "ec2:DescribeKeyPairs",
+        "ec2:ImportKeyPair",
+        "ec2:DeleteKeyPair",
+        "ec2:CreateSecurityGroup",
+        "ec2:DeleteSecurityGroup",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:AuthorizeSecurityGroupEgress",
+        "ec2:RevokeSecurityGroupEgress",
+        "ec2:DescribeSecurityGroupRules",
+        "ec2:CreateTags",
+        "ec2:DeleteTags"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ManageJumpServerRoleAndProfile",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:GetRole",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:CreateInstanceProfile",
+        "iam:DeleteInstanceProfile",
+        "iam:GetInstanceProfile",
+        "iam:AddRoleToInstanceProfile",
+        "iam:RemoveRoleFromInstanceProfile",
+        "iam:TagInstanceProfile",
+        "iam:UntagInstanceProfile"
+      ],
+      "Resource": [
+        "arn:aws:iam::365020425296:role/voting-app-jump-server-role",
+        "arn:aws:iam::365020425296:instance-profile/voting-app-jump-server-profile"
+      ]
+    },
+    {
+      "Sid": "PassJumpServerRoleToEc2",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::365020425296:role/voting-app-jump-server-role",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "ec2.amazonaws.com"
+        }
+      }
+    },
+    {
       "Sid": "ReadDeployStateBucket",
       "Effect": "Allow",
       "Action": "s3:ListBucket",
@@ -127,6 +193,7 @@
       "Sid": "ManageDeployStateLock",
       "Effect": "Allow",
       "Action": [
+        "s3:GetObject",
         "s3:ListMultipartUploadParts",
         "s3:DeleteObject"
       ],
