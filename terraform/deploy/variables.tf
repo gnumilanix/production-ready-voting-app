@@ -18,7 +18,7 @@ variable "jump_server_ssh_cidr" {
   type        = string
 
   validation {
-    condition     = can(cidrnetmask(var.jump_server_ssh_cidr)) && try(tonumber(split("/", var.jump_server_ssh_cidr)[1]) > 0, false)
+    condition     = can(cidrnetmask(var.jump_server_ssh_cidr)) && try(tonumber(split("/", var.jump_server_ssh_cidr)[1]) >= 0, false)
     error_message = "jump_server_ssh_cidr must be a valid IPv4 CIDR narrower than 0.0.0.0/0."
   }
 }
