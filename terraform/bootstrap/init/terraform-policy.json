@@ -2,7 +2,6 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "ReadPlanMetadata",
       "Effect": "Allow",
       "Action": [
         "sts:GetCallerIdentity",
@@ -14,21 +13,10 @@
       "Resource": "*"
     },
     {
-      "Sid": "ReadIamMetadata",
       "Effect": "Allow",
       "Action": [
         "iam:Get*",
         "iam:List*"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "ReadEksMetadata",
-      "Effect": "Allow",
-      "Action": [
-        "eks:Describe*",
-        "eks:Get*",
-        "eks:List*"
       ],
       "Resource": "*"
     },
@@ -195,7 +183,6 @@
       }
     },
     {
-      "Sid": "ManageEksCluster",
       "Effect": "Allow",
       "Action": [
         "eks:CreateCluster",
@@ -232,6 +219,14 @@
         "iam:DetachRolePolicy"
       ],
       "Resource": "arn:aws:iam::365020425296:role/voting-app-eks-cluster-role"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy"
+      ],
+      "Resource": "arn:aws:iam::365020425296:role/voting-app-jump-server-role"
     },
     {
       "Effect": "Allow",
