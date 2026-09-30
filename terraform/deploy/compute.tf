@@ -226,6 +226,10 @@ resource "aws_eks_cluster" "main" {
   role_arn = aws_iam_role.eks_cluster.arn
   version  = "1.33"
 
+  access_config {
+    authentication_mode = "API_AND_CONFIG_MAP"
+  }
+
   vpc_config {
     subnet_ids              = [for subnet in values(aws_subnet.private) : subnet.id]
     security_group_ids      = [aws_security_group.eks_control_plane.id]
@@ -238,6 +242,22 @@ resource "aws_eks_cluster" "main" {
   }
 
   depends_on = [aws_iam_role_policy_attachment.eks_cluster]
+}
+
+resource "aws_eks_access_entry" "jump_server" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_iam_role.jump_server.arn
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "jump_server_view" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_iam_role.jump_server.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
 }
 
 resource "aws_iam_openid_connect_provider" "eks" {

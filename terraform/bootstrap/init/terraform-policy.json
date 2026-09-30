@@ -21,7 +21,6 @@
       "Resource": "*"
     },
     {
-      "Sid": "CreateVpcAndInternetGateway",
       "Effect": "Allow",
       "Action": [
         "ec2:CreateVpc",
@@ -38,7 +37,6 @@
       ]
     },
     {
-      "Sid": "CreateSubnetsAndRouteTables",
       "Effect": "Allow",
       "Action": [
         "ec2:CreateSubnet",
@@ -54,7 +52,6 @@
       ]
     },
     {
-      "Sid": "CreateRoutesAndAssociations",
       "Effect": "Allow",
       "Action": [
         "ec2:CreateRoute",
@@ -72,7 +69,6 @@
       ]
     },
     {
-      "Sid": "ManageNatGatewaysAndElasticIps",
       "Effect": "Allow",
       "Action": [
         "ec2:CreateNatGateway",
@@ -189,10 +185,17 @@
         "eks:DeleteCluster",
         "eks:UpdateClusterConfig",
         "eks:UpdateClusterVersion",
+        "eks:CreateAccessEntry",
+        "eks:DeleteAccessEntry",
+        "eks:AssociateAccessPolicy",
+        "eks:DisassociateAccessPolicy",
         "eks:TagResource",
         "eks:UntagResource"
       ],
-      "Resource": "arn:aws:eks:us-east-1:365020425296:cluster/*"
+      "Resource": [
+        "arn:aws:eks:us-east-1:365020425296:cluster/voting-app",
+        "arn:aws:eks:us-east-1:365020425296:access-entry/voting-app/*"
+      ]
     },
     {
       "Effect": "Allow",

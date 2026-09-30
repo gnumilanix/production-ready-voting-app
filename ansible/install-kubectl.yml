@@ -34,7 +34,7 @@
       changed_when: "'Updated context' in kubeconfig_output.stdout"
 
     - name: Validate baseline cluster reachability
-      ansible.builtin.command: kubectl get nodes
+      ansible.builtin.command: kubectl get namespaces
       become: false
       register: cluster_nodes
       changed_when: false
