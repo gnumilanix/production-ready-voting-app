@@ -81,7 +81,6 @@
       ]
     },
     {
-      "Sid": "AllocateAndReleaseNatElasticIps",
       "Effect": "Allow",
       "Action": [
         "ec2:AllocateAddress",
@@ -90,7 +89,6 @@
       "Resource": "arn:aws:ec2:us-east-1:365020425296:elastic-ip/*"
     },
     {
-      "Sid": "TagNatResources",
       "Effect": "Allow",
       "Action": "ec2:CreateTags",
       "Resource": [
@@ -99,13 +97,11 @@
       ]
     },
     {
-      "Sid": "DeletePrivateDefaultRoutes",
       "Effect": "Allow",
       "Action": "ec2:DeleteRoute",
       "Resource": "arn:aws:ec2:us-east-1:365020425296:route-table/*"
     },
     {
-      "Sid": "TagVpcNetworkResources",
       "Effect": "Allow",
       "Action": "ec2:CreateTags",
       "Resource": [
@@ -116,13 +112,11 @@
       ]
     },
     {
-      "Sid": "ReadJumpServerAmi",
       "Effect": "Allow",
       "Action": "ssm:GetParameter",
       "Resource": "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/*"
     },
     {
-      "Sid": "ManageJumpServerCompute",
       "Effect": "Allow",
       "Action": [
         "ec2:RunInstances",
@@ -168,7 +162,6 @@
       "Resource": "arn:aws:iam::365020425296:instance-profile/voting-app-jump-server-profile"
     },
     {
-      "Sid": "PassJumpServerRoleToEc2",
       "Effect": "Allow",
       "Action": "iam:PassRole",
       "Resource": "arn:aws:iam::365020425296:role/voting-app-jump-server-role",
@@ -185,6 +178,10 @@
         "eks:DeleteCluster",
         "eks:UpdateClusterConfig",
         "eks:UpdateClusterVersion",
+        "eks:CreateNodegroup",
+        "eks:DeleteNodegroup",
+        "eks:UpdateNodegroupConfig",
+        "eks:UpdateNodegroupVersion",
         "eks:CreateAccessEntry",
         "eks:DeleteAccessEntry",
         "eks:AssociateAccessPolicy",
@@ -194,7 +191,8 @@
       ],
       "Resource": [
         "arn:aws:eks:us-east-1:365020425296:cluster/voting-app",
-        "arn:aws:eks:us-east-1:365020425296:access-entry/voting-app/*"
+        "arn:aws:eks:us-east-1:365020425296:access-entry/voting-app/*",
+        "arn:aws:eks:us-east-1:365020425296:nodegroup/voting-app/*/*"
       ]
     },
     {
@@ -221,7 +219,10 @@
         "iam:AttachRolePolicy",
         "iam:DetachRolePolicy"
       ],
-      "Resource": "arn:aws:iam::365020425296:role/voting-app-eks-cluster-role"
+      "Resource": [
+        "arn:aws:iam::365020425296:role/voting-app-eks-cluster-role",
+        "arn:aws:iam::365020425296:role/voting-app-eks-node-role"
+      ]
     },
     {
       "Effect": "Allow",
@@ -243,10 +244,12 @@
       "Resource": "arn:aws:iam::365020425296:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/*"
     },
     {
-      "Sid": "PassEksClusterRole",
       "Effect": "Allow",
       "Action": "iam:PassRole",
-      "Resource": "arn:aws:iam::365020425296:role/voting-app-eks-cluster-role",
+      "Resource": [
+        "arn:aws:iam::365020425296:role/voting-app-eks-cluster-role",
+        "arn:aws:iam::365020425296:role/voting-app-eks-node-role"
+      ],
       "Condition": {
         "StringEquals": {
           "iam:PassedToService": "eks.amazonaws.com"
@@ -254,7 +257,6 @@
       }
     },
     {
-      "Sid": "CreateEksServiceLinkedRole",
       "Effect": "Allow",
       "Action": "iam:CreateServiceLinkedRole",
       "Resource": "*",
@@ -265,13 +267,11 @@
       }
     },
     {
-      "Sid": "ReadDeployStateBucket",
       "Effect": "Allow",
       "Action": "s3:ListBucket",
       "Resource": "arn:aws:s3:::flamingo-voting-app-tfstate"
     },
     {
-      "Sid": "ReadDeployState",
       "Effect": "Allow",
       "Action": [
         "s3:GetObject",
@@ -281,7 +281,6 @@
       "Resource": "arn:aws:s3:::flamingo-voting-app-tfstate/deploy/terraform.tfstate"
     },
     {
-      "Sid": "ManageDeployStateLock",
       "Effect": "Allow",
       "Action": [
         "s3:GetObject",
