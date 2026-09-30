@@ -1,0 +1,40 @@
+---
+- name: Install kubectl on the Terraform jump server
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    kubectl_version: v1.33.0
+    kubectl_platform: linux/amd64
+  tasks:
+    - name: Wait for the jump server to accept SSH connections
+      ansible.builtin.wait_for_connection:
+        delay: 5
+        timeout: 600
+
+    - name: Fetch kubectl SHA-256 checksum
+      ansible.builtin.uri:
+        url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/{{ kubectl_platform }}/kubectl.sha256"
+        return_content: true
+        status_code: 200
+      register: kubectl_checksum
+
+    - name: Download and verify kubectl
+      ansible.builtin.get_url:
+        url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/{{ kubectl_platform }}/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: "0755"
+        checksum: "sha256:{{ kubectl_checksum.content | trim }}"
+
+    - name: Generate native EKS cluster kubeconfig context
+      ansible.builtin.command: >
+        aws eks update-kubeconfig --region eu-central-1 --name "{{ eks_cluster_name }}"
+      become: false
+      register: kubeconfig_output
+      changed_when: "'Updated context' in kubeconfig_output.stdout"
+
+    - name: Validate baseline cluster reachability
+      ansible.builtin.command: kubectl get nodes
+      become: false
+      register: cluster_nodes
+      changed_when: false
