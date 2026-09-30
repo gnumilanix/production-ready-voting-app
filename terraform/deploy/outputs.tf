@@ -27,3 +27,13 @@ output "internet_gateway_id" {
   description = "ID of the VPC internet gateway."
   value       = aws_internet_gateway.main.id
 }
+
+output "nat_gateway_ids" {
+  description = "ID of the shared NAT gateway."
+  value       = aws_nat_gateway.main.id
+}
+
+output "nat_gateway_public_ips" {
+  description = "Public IP address of the shared NAT gateway."
+  value       = aws_eip.nat.public_ip
+}
