@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault-bootstrap
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/playground
+    targetRevision: HEAD
+    path: deploy/argo-specifications/vault
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vault
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+
