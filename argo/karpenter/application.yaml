@@ -7,24 +7,27 @@ metadata:
     argocd.argoproj.io/sync-wave: "-3"
 spec:
   project: playground
-  source:
-    chart: karpenter
-    repoURL: public.ecr.aws/karpenter
-    targetRevision: 1.14.1
-    helm:
-      values: |
-        settings:
-          clusterName: "voting-app"
-          clusterEndpoint: "https://44E356C670181C3BFDC95124C49A2C96.gr7.us-east-1.eks.amazonaws.com"
-          featureGates:
-            spotToSpotConsolidation: true
-        serviceAccount:
-          create: true
-          name: "karpenter"
-        controller:
-          env:
-            - name: AWS_REGION
-              value: "us-east-1"
+  sources:
+    - chart: karpenter
+      repoURL: public.ecr.aws/karpenter
+      targetRevision: 1.14.1
+      helm:
+        values: |
+          settings:
+            clusterName: "voting-app"
+            clusterEndpoint: "https://44E356C670181C3BFDC95124C49A2C96.gr7.us-east-1.eks.amazonaws.com"
+            featureGates:
+              spotToSpotConsolidation: true
+          serviceAccount:
+            create: true
+            name: "karpenter"
+          controller:
+            env:
+              - name: AWS_REGION
+                value: "us-east-1"
+    - repoURL: https://github.com/gnumilanix/production-ready-voting-app.git
+      targetRevision: main
+      path: argo/karpenter/resources
   destination:
     server: https://kubernetes.default.svc
     namespace: karpenter
