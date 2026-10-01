@@ -1,0 +1,68 @@
+---
+- name: Install Argo CD applications
+  hosts: all
+  gather_facts: false
+  vars:
+    installer_kubeconfig: /tmp/voting-app-argocd-applications-kubeconfig
+  environment:
+    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
+    AWS_REGION: "{{ eks_cluster_region }}"
+    KUBECONFIG: "{{ installer_kubeconfig }}"
+  tasks:
+    - name: Configure installer kubeconfig
+      ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
+
+    - name: Apply the Argo CD Image Updater Application
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - -
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/image-updater-application.yaml') }}"
+      register: image_updater_application
+      changed_when: "' created' in image_updater_application.stdout or ' configured' in image_updater_application.stdout"
+
+    - name: Wait for the Argo CD Image Updater Application to become healthy
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - wait
+          - application/argocd-image-updater
+          - --namespace
+          - argocd
+          - --for=jsonpath={.status.health.status}=Healthy
+          - --timeout=300s
+      changed_when: false
+
+    - name: Wait for the ImageUpdater custom resource definition
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - wait
+          - --for=condition=Established
+          - --timeout=120s
+          - crd/imageupdaters.argocd-image-updater.argoproj.io
+      changed_when: false
+
+    - name: Apply the voting ImageUpdater configuration
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - -
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/image-updater.yaml') }}"
+      register: image_updater_config
+      changed_when: "' created' in image_updater_config.stdout or ' configured' in image_updater_config.stdout"
+
+    - name: Apply the Karpenter bootstrap Application
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - -
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/karpenter-application.yaml') }}"
+      register: karpenter_bootstrap_application
+      changed_when: "' created' in karpenter_bootstrap_application.stdout or ' configured' in karpenter_bootstrap_application.stdout"

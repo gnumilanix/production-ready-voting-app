@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: karpenter-bootstrap
+  namespace: argocd
+spec:
+  project: playground
+  source:
+    repoURL: https://github.com/gnumilanix/production-ready-voting-app.git
+    targetRevision: main
+    path: argo/karpenter
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: karpenter 
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+

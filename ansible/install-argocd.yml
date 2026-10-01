@@ -55,3 +55,26 @@
           - "{{ argocd_values_file }}"
       register: argocd_helm_install
       changed_when: "'has been installed' in argocd_helm_install.stdout or 'has been upgraded' in argocd_helm_install.stdout"
+
+    - name: Register GitHub and Helm repositories with Argo CD
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - -
+        stdin: "{{ lookup('template', playbook_dir ~ '/../argo/repository.yaml.j2') }}"
+      register: argocd_repositories
+      changed_when: "' created' in argocd_repositories.stdout or ' configured' in argocd_repositories.stdout"
+      no_log: true
+
+    - name: Apply the voting AppProject
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - -
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/project.yaml') }}"
+      register: argocd_project
+      changed_when: "' created' in argocd_project.stdout or ' configured' in argocd_project.stdout"

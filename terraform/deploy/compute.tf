@@ -297,6 +297,12 @@ resource "aws_eks_cluster" "main" {
   depends_on = [aws_iam_role_policy_attachment.eks_cluster]
 }
 
+resource "aws_ec2_tag" "karpenter_cluster_security_group_discovery" {
+  resource_id = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
+  key         = "karpenter.sh/discovery"
+  value       = var.name
+}
+
 resource "aws_eks_access_entry" "jump_server" {
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = aws_iam_role.jump_server.arn

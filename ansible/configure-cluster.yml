@@ -5,3 +5,4 @@
 - import_playbook: install-gateway-api.yml
 - import_playbook: configure-aws-load-balancer-controller-service-account.yml
 - import_playbook: install-argocd.yml
+- import_playbook: install-argocd-applications.yml

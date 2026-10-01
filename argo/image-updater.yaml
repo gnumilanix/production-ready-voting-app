@@ -1,0 +1,26 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: voting-image-updater
+  namespace: argocd
+spec:
+  writeBackConfig:
+    method: argocd
+  applicationRefs:
+    - namePattern: "voting"
+      images:
+        - alias: "result"
+          imageName: "ghcr.io/gnumilanix/production-ready-voting-app-result:main-latest"
+          commonUpdateSettings:
+            updateStrategy: digest
+            forceUpdate: false
+        - alias: "vote"
+          imageName: "ghcr.io/gnumilanix/production-ready-voting-app-vote:main-latest"
+          commonUpdateSettings:
+            updateStrategy: digest
+            forceUpdate: false
+        - alias: "worker"
+          imageName: "ghcr.io/gnumilanix/production-ready-voting-app-worker:main-latest"
+          commonUpdateSettings:
+            updateStrategy: digest
+            forceUpdate: false

@@ -144,6 +144,8 @@ jobs:
 
             - name: Configure cluster with Ansible
               uses: dawidd6/action-ansible-playbook@v9
+              env:
+                  ARGOCD_REPO_TOKEN: ${{ secrets.ARGOCD_REPO_TOKEN }}
               with:
                   playbook: configure-cluster.yml
                   directory: ansible

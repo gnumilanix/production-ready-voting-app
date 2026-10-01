@@ -34,8 +34,9 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.name}-public-${local.availability_zones[each.value]}"
-    Tier = "public"
+    Name                     = "${var.name}-public-${local.availability_zones[each.value]}"
+    Tier                     = "public"
+    "kubernetes.io/role/elb" = "1"
   }
 }
 
@@ -47,8 +48,10 @@ resource "aws_subnet" "private" {
   cidr_block        = cidrsubnet(var.vpc_cidr, 4, each.value + 3)
 
   tags = {
-    Name = "${var.name}-private-${local.availability_zones[each.value]}"
-    Tier = "private"
+    Name                              = "${var.name}-private-${local.availability_zones[each.value]}"
+    Tier                              = "private"
+    "kubernetes.io/role/internal-elb" = "1"
+    "karpenter.sh/discovery"          = var.name
   }
 }
 
