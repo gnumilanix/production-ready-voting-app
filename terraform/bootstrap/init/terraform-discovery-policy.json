@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity",
+        "ec2:Describe*",
+        "eks:Describe*",
+        "eks:Get*",
+        "eks:List*",
+        "iam:Get*",
+        "iam:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/*"
+    }
+  ]
+}

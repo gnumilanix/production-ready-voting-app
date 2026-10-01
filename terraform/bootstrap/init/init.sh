@@ -25,18 +25,30 @@ aws iam attach-role-policy \
   --role-name GitHubActionsTerraformRole \
   --policy-arn arn:aws:iam::365020425296:policy/GitHubTerraformS3BackendPolicy
 
-# IAM least previlage policy for terraform user
-aws iam create-policy \
-  --policy-name TerraformExecutionPolicy \
-  --policy-document file://terraform-policy.json
-  
-aws iam attach-user-policy \
-  --user-name terraform-user \
-  --policy-arn arn:aws:iam::365020425296:policy/TerraformExecutionPolicy
-  
-aws iam attach-role-policy \
-  --role-name GitHubActionsTerraformRole \
-  --policy-arn arn:aws:iam::365020425296:policy/TerraformExecutionPolicy
+create_and_attach_policy() {
+  local policy_name="$1"
+  local policy_document="$2"
+  local policy_arn="arn:aws:iam::365020425296:policy/${policy_name}"
+
+  aws iam create-policy \
+    --policy-name "$policy_name" \
+    --policy-document "file://${policy_document}"
+
+  aws iam attach-user-policy \
+    --user-name terraform-user \
+    --policy-arn "$policy_arn"
+
+  aws iam attach-role-policy \
+    --role-name GitHubActionsTerraformRole \
+    --policy-arn "$policy_arn"
+}
+
+create_and_attach_policy TerraformDiscoveryPolicy terraform-discovery-policy.json
+create_and_attach_policy TerraformNetworkPolicy terraform-network-policy.json
+create_and_attach_policy TerraformComputePolicy terraform-compute-policy.json
+create_and_attach_policy TerraformEksPolicy terraform-eks-policy.json
+create_and_attach_policy TerraformIamPolicy terraform-iam-policy.json
+create_and_attach_policy TerraformPodIdentityPassRolePolicy pod-identity-pass-role-policy.json
 
 # Bucket for bootstrap tf state
 aws s3api create-bucket \

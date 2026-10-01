@@ -1,0 +1,19 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::365020425296:role/voting-app-argocd-pod-identity-role",
+        "arn:aws:iam::365020425296:role/voting-app-karpenter-pod-identity-role",
+        "arn:aws:iam::365020425296:role/voting-app-vault-pod-identity-role"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "pods.eks.amazonaws.com"
+        }
+      }
+    }
+  ]
+}

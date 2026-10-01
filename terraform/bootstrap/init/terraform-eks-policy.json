@@ -1,0 +1,41 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "eks:CreateCluster",
+        "eks:DeleteCluster",
+        "eks:UpdateClusterConfig",
+        "eks:UpdateClusterVersion",
+        "eks:CreateNodegroup",
+        "eks:DeleteNodegroup",
+        "eks:UpdateNodegroupConfig",
+        "eks:UpdateNodegroupVersion",
+        "eks:CreateAddon",
+        "eks:DeleteAddon",
+        "eks:UpdateAddon",
+        "eks:CreateAccessEntry",
+        "eks:DeleteAccessEntry",
+        "eks:AssociateAccessPolicy",
+        "eks:DisassociateAccessPolicy",
+        "eks:CreatePodIdentityAssociation",
+        "eks:TagResource",
+        "eks:UntagResource"
+      ],
+      "Resource": [
+        "arn:aws:eks:us-east-1:365020425296:cluster/voting-app",
+        "arn:aws:eks:us-east-1:365020425296:*/voting-app/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "eks:DeletePodIdentityAssociation",
+        "eks:TagResource",
+        "eks:UntagResource"
+      ],
+      "Resource": "arn:aws:eks:us-east-1:365020425296:podidentityassociation/voting-app/*"
+    }
+  ]
+}
