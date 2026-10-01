@@ -68,7 +68,8 @@
       "Action": "iam:PassRole",
       "Resource": [
         "arn:aws:iam::365020425296:role/voting-app-eks-cluster-role",
-        "arn:aws:iam::365020425296:role/voting-app-eks-node-role"
+        "arn:aws:iam::365020425296:role/voting-app-eks-node-role",
+        "arn:aws:iam::365020425296:role/voting-app-karpenter-node-role"
       ],
       "Condition": {
         "StringEquals": {
