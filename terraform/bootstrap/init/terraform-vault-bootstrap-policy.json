@@ -16,6 +16,7 @@
       "Action": [
         "secretsmanager:DeleteSecret",
         "secretsmanager:DescribeSecret",
+        "secretsmanager:GetResourcePolicy",
         "secretsmanager:TagResource",
         "secretsmanager:UntagResource",
         "secretsmanager:UpdateSecret"
