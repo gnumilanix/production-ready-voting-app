@@ -35,3 +35,5 @@ spec:
     namespace: 'argo-rollouts'
   - server: https://kubernetes.default.svc
     namespace: karpenter
+  - server: https://kubernetes.default.svc
+    namespace: kube-system
