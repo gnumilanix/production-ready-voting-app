@@ -21,6 +21,10 @@ Following variables and secrets needs to be configured for the repo:
 - `JUMP_SERVER_PRIVATE_KEY`
 - `JUMP_SERVER_PUBLIC_KEY`
 
+Add these as secrets in the GitHub `production` environment. Ansible writes the PostgreSQL credentials to Vault at `secret/postgres-creds`.
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+
 **Variables**:
 - `AWS_REGION`
 - `STATE_BUCKET_NAME`

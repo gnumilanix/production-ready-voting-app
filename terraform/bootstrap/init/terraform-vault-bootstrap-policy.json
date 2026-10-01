@@ -1,0 +1,26 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["secretsmanager:CreateSecret"],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "secretsmanager:Name": "voting-app/vault/initialization"
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:DeleteSecret",
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:TagResource",
+        "secretsmanager:UntagResource",
+        "secretsmanager:UpdateSecret"
+      ],
+      "Resource": "arn:aws:secretsmanager:us-east-1:365020425296:secret:voting-app/vault/initialization-*"
+    }
+  ]
+}

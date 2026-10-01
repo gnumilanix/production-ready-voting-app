@@ -47,6 +47,7 @@ create_and_attach_policy TerraformDiscoveryPolicy terraform-discovery-policy.jso
 create_and_attach_policy TerraformNetworkPolicy terraform-network-policy.json
 create_and_attach_policy TerraformComputePolicy terraform-compute-policy.json
 create_and_attach_policy TerraformVaultKmsPolicy terraform-vault-kms-policy.json
+create_and_attach_policy TerraformVaultBootstrapPolicy terraform-vault-bootstrap-policy.json
 create_and_attach_policy TerraformEksPolicy terraform-eks-policy.json
 create_and_attach_policy TerraformIamPolicy terraform-iam-policy.json
 create_and_attach_policy TerraformPodIdentityPassRolePolicy pod-identity-pass-role-policy.json

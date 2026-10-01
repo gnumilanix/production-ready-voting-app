@@ -1,0 +1,238 @@
+---
+- name: Configure Vault
+  hosts: all
+  gather_facts: false
+  vars:
+    installer_kubeconfig: /tmp/voting-app-vault-kubeconfig
+    vault_namespace: vault
+    vault_pod: vault-0
+    vault_address: http://127.0.0.1:8200
+    vault_init_secret_id: voting-app/vault/initialization
+    vault_postgres_user: "{{ lookup('env', 'POSTGRES_USER') }}"
+    vault_postgres_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+    vault_cli_prefix:
+      - kubectl
+      - exec
+      - -i
+      - --namespace
+      - vault
+      - vault-0
+      - --
+      - env
+      - VAULT_ADDR=http://127.0.0.1:8200
+    vault_bootstrap_policy: |
+      path "sys/mounts" {
+        capabilities = ["read"]
+      }
+      path "sys/mounts/secret" {
+        capabilities = ["create", "read", "update"]
+      }
+      path "secret/data/postgres-creds" {
+        capabilities = ["create", "read", "update"]
+      }
+      path "sys/policies/acl/voting-app-policy" {
+        capabilities = ["create", "read", "update"]
+      }
+      path "sys/auth" {
+        capabilities = ["read"]
+      }
+      path "sys/auth/kubernetes" {
+        capabilities = ["create", "read", "update"]
+      }
+      path "auth/kubernetes/config" {
+        capabilities = ["create", "read", "update"]
+      }
+      path "auth/kubernetes/role/voting-role" {
+        capabilities = ["create", "read", "update"]
+      }
+    vault_application_policy: |
+      path "secret/data/postgres-creds" {
+        capabilities = ["read"]
+      }
+  environment:
+    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
+    AWS_REGION: "{{ eks_cluster_region }}"
+    KUBECONFIG: "{{ installer_kubeconfig }}"
+  tasks:
+    - name: Configure installer kubeconfig
+      ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
+
+    - name: Wait for the Vault pod to run
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - wait
+          - --namespace
+          - "{{ vault_namespace }}"
+          - --for=jsonpath={.status.phase}=Running
+          - --timeout=600s
+          - "pod/{{ vault_pod }}"
+      changed_when: false
+
+    - name: Read Vault initialization status
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['vault', 'status', '-format=json'] }}"
+      register: vault_initial_status
+      changed_when: false
+      failed_when: vault_initial_status.rc not in [0, 2]
+
+    - name: Record whether Vault is initialized
+      ansible.builtin.set_fact:
+        vault_is_initialized: "{{ (vault_initial_status.stdout | from_json).initialized }}"
+
+    - name: Initialize Vault when needed
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['vault', 'operator', 'init', '-format=json'] }}"
+      register: vault_operator_init
+      when: not vault_is_initialized
+      changed_when: true
+      no_log: true
+
+    - name: Store Vault initialization material in Secrets Manager
+      ansible.builtin.command:
+        argv:
+          - aws
+          - secretsmanager
+          - put-secret-value
+          - --region
+          - "{{ eks_cluster_region }}"
+          - --secret-id
+          - "{{ vault_init_secret_id }}"
+          - --secret-string
+          - "{{ vault_operator_init.stdout }}"
+      when: not vault_is_initialized
+      changed_when: true
+      no_log: true
+
+    - name: Read Vault initialization material from Secrets Manager
+      ansible.builtin.command:
+        argv:
+          - aws
+          - secretsmanager
+          - get-secret-value
+          - --region
+          - "{{ eks_cluster_region }}"
+          - --secret-id
+          - "{{ vault_init_secret_id }}"
+          - --query
+          - SecretString
+          - --output
+          - text
+      register: vault_initialization_secret
+      when: vault_is_initialized
+      changed_when: false
+      no_log: true
+
+    - name: Set the Vault root token for this initialization run
+      ansible.builtin.set_fact:
+        vault_root_token: "{{ (vault_operator_init.stdout | from_json).root_token }}"
+      when: not vault_is_initialized
+      no_log: true
+
+    - name: Set the Vault root token for an existing installation
+      ansible.builtin.set_fact:
+        vault_root_token: "{{ (vault_initialization_secret.stdout | from_json).root_token }}"
+      when: vault_is_initialized
+      no_log: true
+
+    - name: Wait for Vault to unseal
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['vault', 'status', '-format=json'] }}"
+      register: vault_unsealed_status
+      changed_when: false
+      failed_when: false
+      retries: 30
+      delay: 10
+      until: vault_unsealed_status.rc == 0
+
+    - name: Write the scoped Vault bootstrap policy
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_root_token, 'vault', 'policy', 'write', 'voting-app-bootstrap', '-'] }}"
+        stdin: "{{ vault_bootstrap_policy }}"
+      changed_when: true
+      no_log: true
+
+    - name: Create a short-lived Vault bootstrap token
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_root_token, 'vault', 'token', 'create', '-orphan', '-policy=voting-app-bootstrap', '-ttl=1h', '-format=json'] }}"
+      register: vault_scoped_token_result
+      changed_when: true
+      no_log: true
+
+    - name: Set the scoped Vault bootstrap token
+      ansible.builtin.set_fact:
+        vault_scoped_token: "{{ (vault_scoped_token_result.stdout | from_json).auth.client_token }}"
+      no_log: true
+
+    - name: Check mounted Vault secrets engines
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'secrets', 'list', '-format=json'] }}"
+      register: vault_secrets_engines
+      changed_when: false
+      no_log: true
+
+    - name: Enable the version 2 KV engine at secret/
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'secrets', 'enable', '-path=secret', 'kv-v2'] }}"
+      when: "'secret/' not in vault_secrets_engines.stdout"
+      changed_when: true
+      no_log: true
+
+    - name: Require PostgreSQL credentials from the GitHub Actions environment
+      ansible.builtin.assert:
+        that:
+          - vault_postgres_user | length > 0
+          - vault_postgres_password | length > 0
+        fail_msg: POSTGRES_USER and POSTGRES_PASSWORD must be configured as GitHub Actions secrets.
+      no_log: true
+
+    - name: Check for the PostgreSQL credentials secret
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'kv', 'get', '-format=json', 'secret/postgres-creds'] }}"
+      register: vault_postgres_secret
+      changed_when: false
+      failed_when: false
+      no_log: true
+
+    - name: Synchronize PostgreSQL credentials from GitHub Actions
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'kv', 'put', 'secret/postgres-creds', 'POSTGRES_USER=' ~ vault_postgres_user, 'POSTGRES_PASSWORD=' ~ vault_postgres_password] }}"
+      when: >-
+        vault_postgres_secret.rc != 0 or
+        (vault_postgres_secret.stdout | from_json).data.data.POSTGRES_USER != vault_postgres_user or
+        (vault_postgres_secret.stdout | from_json).data.data.POSTGRES_PASSWORD != vault_postgres_password
+      changed_when: true
+      no_log: true
+
+    - name: Write the voting application read policy
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'policy', 'write', 'voting-app-policy', '-'] }}"
+        stdin: "{{ vault_application_policy }}"
+      changed_when: true
+      no_log: true
+
+    - name: Check enabled Vault auth methods
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'auth', 'list', '-format=json'] }}"
+      register: vault_auth_methods
+      changed_when: false
+      no_log: true
+
+    - name: Enable Kubernetes authentication when absent
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'auth', 'enable', 'kubernetes'] }}"
+      when: "'kubernetes/' not in vault_auth_methods.stdout"
+      changed_when: true
+      no_log: true
+
+    - name: Configure Kubernetes authentication
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'write', 'auth/kubernetes/config', 'kubernetes_host=https://kubernetes.default.svc:443'] }}"
+      changed_when: true
+      no_log: true
+
+    - name: Configure the voting Kubernetes auth role
+      ansible.builtin.command:
+        argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'write', 'auth/kubernetes/role/voting-role', 'bound_service_account_names=voting', 'bound_service_account_namespaces=voting', 'policies=voting-app-policy', 'ttl=24h'] }}"
+      changed_when: true
+      no_log: true

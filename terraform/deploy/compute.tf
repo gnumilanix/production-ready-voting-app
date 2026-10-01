@@ -714,6 +714,16 @@ resource "aws_kms_alias" "vault_unseal" {
   target_key_id = aws_kms_key.vault_unseal.key_id
 }
 
+resource "aws_secretsmanager_secret" "vault_initialization" {
+  name                    = "${var.name}/vault/initialization"
+  description             = "Vault initialization recovery material for ${var.name}."
+  recovery_window_in_days = 30
+
+  tags = {
+    Name = "${var.name}-vault-initialization"
+  }
+}
+
 resource "aws_iam_role_policy" "vault_kms_unseal" {
   name = "${var.name}-vault-kms-unseal"
   role = aws_iam_role.pod_identity["vault"].name
@@ -917,5 +927,23 @@ resource "aws_iam_role_policy" "jump_server_eks_management" {
         Resource = "*"
       }
     ]
+  })
+}
+
+resource "aws_iam_role_policy" "jump_server_vault_initialization" {
+  name = "${var.name}-jump-server-vault-initialization"
+  role = aws_iam_role.jump_server.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:PutSecretValue"
+      ]
+      Resource = aws_secretsmanager_secret.vault_initialization.arn
+    }]
   })
 }
