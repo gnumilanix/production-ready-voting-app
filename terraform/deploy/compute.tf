@@ -542,6 +542,90 @@ resource "aws_eks_pod_identity_association" "karpenter" {
   depends_on = [aws_eks_addon.managed["eks-pod-identity-agent"]]
 }
 
+resource "aws_iam_policy" "karpenter_controller" {
+  name        = "${var.name}-karpenter-controller-policy"
+  description = "Permissions for the Karpenter controller on the ${var.name} EKS cluster."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "KarpenterControllerEC2Operations"
+        Effect = "Allow"
+        Action = [
+          "ec2:CreateFleet",
+          "ec2:CreateLaunchTemplate",
+          "ec2:CreateTags",
+          "ec2:DeleteLaunchTemplate",
+          "ec2:DescribeAvailabilityZones",
+          "ec2:DescribeCapacityReservations",
+          "ec2:DescribeImages",
+          "ec2:DescribeInstances",
+          "ec2:DescribeInstanceStatus",
+          "ec2:DescribeInstanceTypeOfferings",
+          "ec2:DescribeInstanceTypes",
+          "ec2:DescribeLaunchTemplates",
+          "ec2:DescribePlacementGroups",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeSpotPriceHistory",
+          "ec2:DescribeSubnets",
+          "ec2:RunInstances",
+          "ec2:TerminateInstances",
+          "ssm:GetParameter"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid      = "KarpenterControllerPassRole"
+        Effect   = "Allow"
+        Action   = "iam:PassRole"
+        Resource = aws_iam_role.ec2_node["karpenter_node"].arn
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = ["ec2.amazonaws.com", "ec2.amazonaws.com.cn"]
+          }
+        }
+      },
+      {
+        Sid      = "KarpenterControllerEKSDescribe"
+        Effect   = "Allow"
+        Action   = "eks:DescribeCluster"
+        Resource = aws_eks_cluster.main.arn
+      },
+      {
+        Sid      = "KarpenterControllerPricing"
+        Effect   = "Allow"
+        Action   = "pricing:GetProducts"
+        Resource = "*"
+      },
+      {
+        Sid      = "KarpenterControllerIAMInstanceProfileList"
+        Effect   = "Allow"
+        Action   = "iam:ListInstanceProfiles"
+        Resource = "*"
+      },
+      {
+        Sid    = "KarpenterControllerIAMInstanceProfileManagement"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateInstanceProfile",
+          "iam:DeleteInstanceProfile",
+          "iam:GetInstanceProfile",
+          "iam:AddRoleToInstanceProfile",
+          "iam:RemoveRoleFromInstanceProfile",
+          "iam:TagInstanceProfile"
+        ]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "karpenter_controller" {
+  role       = aws_iam_role.pod_identity["karpenter"].name
+  policy_arn = aws_iam_policy.karpenter_controller.arn
+}
+
 resource "aws_eks_pod_identity_association" "vault" {
   cluster_name    = aws_eks_cluster.main.name
   namespace       = "vault"
