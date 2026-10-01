@@ -470,6 +470,51 @@ resource "aws_eks_addon" "with_pod_identity" {
   ]
 }
 
+resource "aws_eks_pod_identity_association" "argocd_application_controller" {
+  cluster_name    = aws_eks_cluster.main.name
+  namespace       = "argocd"
+  service_account = "argocd-application-controller"
+  role_arn        = aws_iam_role.pod_identity["argocd"].arn
+
+  depends_on = [aws_eks_addon.managed["eks-pod-identity-agent"]]
+}
+
+resource "aws_eks_pod_identity_association" "argocd_image_updater" {
+  cluster_name    = aws_eks_cluster.main.name
+  namespace       = "argocd"
+  service_account = "argocd-image-updater"
+  role_arn        = aws_iam_role.pod_identity["argocd"].arn
+
+  depends_on = [aws_eks_addon.managed["eks-pod-identity-agent"]]
+}
+
+resource "aws_eks_pod_identity_association" "argo_rollouts" {
+  cluster_name    = aws_eks_cluster.main.name
+  namespace       = "argocd"
+  service_account = "argo-rollouts"
+  role_arn        = aws_iam_role.pod_identity["argocd"].arn
+
+  depends_on = [aws_eks_addon.managed["eks-pod-identity-agent"]]
+}
+
+resource "aws_eks_pod_identity_association" "karpenter" {
+  cluster_name    = aws_eks_cluster.main.name
+  namespace       = "karpenter"
+  service_account = "karpenter"
+  role_arn        = aws_iam_role.pod_identity["karpenter"].arn
+
+  depends_on = [aws_eks_addon.managed["eks-pod-identity-agent"]]
+}
+
+resource "aws_eks_pod_identity_association" "vault" {
+  cluster_name    = aws_eks_cluster.main.name
+  namespace       = "vault"
+  service_account = "vault"
+  role_arn        = aws_iam_role.pod_identity["vault"].arn
+
+  depends_on = [aws_eks_addon.managed["eks-pod-identity-agent"]]
+}
+
 resource "aws_iam_openid_connect_provider" "eks" {
   url            = aws_eks_cluster.main.identity[0].oidc[0].issuer
   client_id_list = ["sts.amazonaws.com"]

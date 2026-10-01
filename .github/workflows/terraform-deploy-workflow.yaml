@@ -172,6 +172,16 @@ jobs:
                       [jump_server]
                       ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user
 
+            - name: Install Gateway API CRDs
+              uses: dawidd6/action-ansible-playbook@v9
+              with:
+                  playbook: install-gateway-api.yml
+                  directory: ansible
+                  key: ${{ secrets.JUMP_SERVER_PRIVATE_KEY }}
+                  inventory: |
+                      [jump_server]
+                      ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user eks_cluster_name=${{ needs.deploy.outputs.eks_cluster_name }} eks_cluster_region=${{ needs.deploy.outputs.eks_cluster_region }} installer_role_arn=${{ needs.deploy.outputs.controller_installer_role_arn }}
+
             - name: Configure AWS Load Balancer Controller service account
               uses: dawidd6/action-ansible-playbook@v9
               with:
