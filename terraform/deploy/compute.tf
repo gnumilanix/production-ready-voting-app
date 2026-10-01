@@ -175,6 +175,13 @@ resource "aws_iam_role_policy_attachment" "eks_node" {
   policy_arn = each.value
 }
 
+resource "aws_iam_role_policy_attachment" "karpenter_node" {
+  for_each = local.eks_node_policy_arns
+
+  role       = aws_iam_role.ec2_node["karpenter_node"].name
+  policy_arn = each.value
+}
+
 resource "aws_iam_instance_profile" "jump_server" {
   name = "voting-app-jump-server-profile"
   role = aws_iam_role.jump_server.name
@@ -504,6 +511,12 @@ resource "aws_eks_addon" "with_pod_identity" {
   addon_version               = data.aws_eks_addon_version.managed[each.key].version
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "PRESERVE"
+  configuration_values = each.key == "vpc-cni" ? jsonencode({
+    env = {
+      ENABLE_PREFIX_DELEGATION = "true"
+      WARM_PREFIX_TARGET       = "1"
+    }
+  }) : null
 
   pod_identity_association {
     role_arn        = aws_iam_role.pod_identity[each.value.role_key].arn
