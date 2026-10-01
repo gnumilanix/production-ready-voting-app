@@ -62,7 +62,7 @@
           - kubectl
           - apply
           - -f
-          - -
+          - "-"
         stdin: "{{ lookup('file', playbook_dir ~ '/../argo/project.yaml') }}"
       register: argocd_project
       changed_when: "' created' in argocd_project.stdout or ' configured' in argocd_project.stdout"
