@@ -23,5 +23,6 @@ Following variables and secrets needs to be configured for the repo:
 
 **Variables**:
 - `AWS_REGION`
-- `JUMP_SERVER_SSH_CIDR`
 - `STATE_BUCKET_NAME`
+- `JUMP_SERVER_SSH_CIDR`
+- `EKS_CONSOLE_PRINCIPAL_ARN`

@@ -13,6 +13,7 @@ permissions:
 env:
     TF_VAR_aws_region: ${{ vars.AWS_REGION }}
     TF_VAR_state_bucket_name: ${{ vars.STATE_BUCKET_NAME }}
+    TF_VAR_eks_console_principal_arn: ${{ vars.EKS_CONSOLE_PRINCIPAL_ARN }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

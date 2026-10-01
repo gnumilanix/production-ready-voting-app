@@ -333,6 +333,24 @@ resource "aws_eks_access_policy_association" "jump_server_admin_view" {
   }
 }
 
+resource "aws_eks_access_entry" "console_user" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = var.eks_console_principal_arn
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "console_user_admin_view" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_eks_access_entry.console_user.principal_arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminViewPolicy"
+
+  depends_on = [aws_eks_access_entry.console_user]
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
 resource "aws_iam_role" "controller_installer" {
   name = "${var.name}-controller-installer-role"
 
