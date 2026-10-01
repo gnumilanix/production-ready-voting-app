@@ -17,7 +17,10 @@
     {
       "Effect": "Allow",
       "Action": "ssm:GetParameter",
-      "Resource": "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/*"
+      "Resource": [
+        "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/*",
+        "arn:aws:ssm:us-east-1::parameter/aws/service/eks/optimized-ami/*/amazon-linux-2023/x86_64/standard/recommended/image_id"
+      ]
     }
   ]
 }
