@@ -191,3 +191,13 @@ jobs:
                   inventory: |
                       [jump_server]
                       ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user eks_cluster_name=${{ needs.deploy.outputs.eks_cluster_name }} eks_cluster_region=${{ needs.deploy.outputs.eks_cluster_region }} vpc_id=${{ needs.deploy.outputs.vpc_id }} controller_role_arn=${{ needs.deploy.outputs.aws_load_balancer_controller_role_arn }} installer_role_arn=${{ needs.deploy.outputs.controller_installer_role_arn }}
+
+            - name: Install Argo CD
+              uses: dawidd6/action-ansible-playbook@v9
+              with:
+                  playbook: install-argocd.yml
+                  directory: ansible
+                  key: ${{ secrets.JUMP_SERVER_PRIVATE_KEY }}
+                  inventory: |
+                      [jump_server]
+                      ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user eks_cluster_name=${{ needs.deploy.outputs.eks_cluster_name }} eks_cluster_region=${{ needs.deploy.outputs.eks_cluster_region }} installer_role_arn=${{ needs.deploy.outputs.controller_installer_role_arn }}

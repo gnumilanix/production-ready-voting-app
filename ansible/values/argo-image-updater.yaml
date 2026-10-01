@@ -1,0 +1,12 @@
+config:
+  registries:
+    - name: GHCR
+      api_url: https://ghcr.io
+      prefix: ghcr.io
+      ping: yes
+      insecure: no
+  watch.namespaces: "argocd"
+
+serviceAccount:
+  create: true
+  name: argocd-image-updater

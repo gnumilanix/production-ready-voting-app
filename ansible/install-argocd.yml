@@ -1,0 +1,96 @@
+---
+- name: Install Argo CD
+  hosts: all
+  gather_facts: false
+  vars:
+    argocd_namespace: argocd
+    argocd_values_file: /tmp/voting-app-argocd-values.yaml
+  tasks:
+    - name: Assume the Terraform-managed controller installer role
+      ansible.builtin.command:
+        argv:
+          - aws
+          - sts
+          - assume-role
+          - --role-arn
+          - "{{ installer_role_arn }}"
+          - --role-session-name
+          - ansible-argocd-installer
+          - --region
+          - "{{ eks_cluster_region }}"
+          - --query
+          - Credentials
+          - --output
+          - json
+      register: argocd_installer_credentials
+      changed_when: false
+      no_log: true
+
+    - name: Set temporary AWS credentials for Argo CD installation
+      ansible.builtin.set_fact:
+        argocd_installer_environment:
+          AWS_ACCESS_KEY_ID: "{{ (argocd_installer_credentials.stdout | from_json).AccessKeyId }}"
+          AWS_SECRET_ACCESS_KEY: "{{ (argocd_installer_credentials.stdout | from_json).SecretAccessKey }}"
+          AWS_SESSION_TOKEN: "{{ (argocd_installer_credentials.stdout | from_json).SessionToken }}"
+          AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
+          AWS_REGION: "{{ eks_cluster_region }}"
+          KUBECONFIG: /tmp/voting-app-argocd-installer-kubeconfig
+      no_log: true
+
+    - name: Configure kubeconfig using the installer role
+      ansible.builtin.command:
+        argv:
+          - aws
+          - eks
+          - update-kubeconfig
+          - --name
+          - "{{ eks_cluster_name }}"
+          - --region
+          - "{{ eks_cluster_region }}"
+      environment: "{{ argocd_installer_environment }}"
+      changed_when: false
+
+    - name: Copy Argo CD Helm values to the jump server
+      ansible.builtin.copy:
+        src: values/argo.yaml
+        dest: "{{ argocd_values_file }}"
+        mode: "0644"
+
+    - name: Add the Argo Helm chart repository
+      ansible.builtin.command:
+        argv:
+          - helm
+          - repo
+          - add
+          - argo
+          - https://argoproj.github.io/argo-helm
+          - --force-update
+      changed_when: false
+      environment: "{{ argocd_installer_environment }}"
+
+    - name: Update the Argo Helm chart repository
+      ansible.builtin.command:
+        argv:
+          - helm
+          - repo
+          - update
+          - argo
+      changed_when: false
+      environment: "{{ argocd_installer_environment }}"
+
+    - name: Install or upgrade Argo CD
+      ansible.builtin.command:
+        argv:
+          - helm
+          - upgrade
+          - --install
+          - argocd
+          - argo/argo-cd
+          - --namespace
+          - "{{ argocd_namespace }}"
+          - --create-namespace
+          - --values
+          - "{{ argocd_values_file }}"
+      register: argocd_helm_install
+      changed_when: "'has been installed' in argocd_helm_install.stdout or 'has been upgraded' in argocd_helm_install.stdout"
+      environment: "{{ argocd_installer_environment }}"

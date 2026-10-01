@@ -1,0 +1,27 @@
+global:
+  domain: "" 
+
+configs:
+  cm:
+    timeout.reconciliation: 600s
+    timeout.reconciliation.jitter: 30s
+    
+controller:
+  serviceAccount:
+    create: true
+    name: argocd-application-controller
+
+server:
+  extraArgs:
+    - --insecure
+
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    annotations:
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+  
+    hosts: ["*"]
