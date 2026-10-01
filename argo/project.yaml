@@ -9,12 +9,15 @@ spec:
   sourceRepos:
   - https://github.com/gnumilanix/production-ready-voting-app.git
   - https://argoproj.github.io/argo-helm
+  - https://helm.releases.hashicorp.com
   - public.ecr.aws/karpenter
   clusterResourceWhitelist:
   - group: '*'
     kind: Namespace
   - group: apiextensions.k8s.io
     kind: CustomResourceDefinition
+  - group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
   - group: rbac.authorization.k8s.io
     kind: ClusterRole
   - group: rbac.authorization.k8s.io
@@ -35,5 +38,7 @@ spec:
     namespace: 'argo-rollouts'
   - server: https://kubernetes.default.svc
     namespace: karpenter
+  - server: https://kubernetes.default.svc
+    namespace: vault
   - server: https://kubernetes.default.svc
     namespace: kube-system

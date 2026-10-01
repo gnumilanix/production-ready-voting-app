@@ -77,3 +77,14 @@
         stdin: "{{ lookup('file', playbook_dir ~ '/../argo/rollout-application.yaml') }}"
       register: argo_rollouts_bootstrap_application
       changed_when: "' created' in argo_rollouts_bootstrap_application.stdout or ' configured' in argo_rollouts_bootstrap_application.stdout"
+
+    - name: Apply the Vault bootstrap Application
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - "-"
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/vault-application.yaml') }}"
+      register: vault_bootstrap_application
+      changed_when: "' created' in vault_bootstrap_application.stdout or ' configured' in vault_bootstrap_application.stdout"

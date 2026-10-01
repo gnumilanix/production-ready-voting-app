@@ -695,13 +695,53 @@ resource "aws_iam_role_policy_attachment" "karpenter_controller" {
   policy_arn = aws_iam_policy.karpenter_controller.arn
 }
 
+resource "aws_kms_key" "vault_unseal" {
+  description             = "Vault auto-unseal key for ${var.name}."
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+
+  tags = {
+    Name = "${var.name}-vault-unseal"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_kms_alias" "vault_unseal" {
+  name          = "alias/${var.name}-vault-unseal"
+  target_key_id = aws_kms_key.vault_unseal.key_id
+}
+
+resource "aws_iam_role_policy" "vault_kms_unseal" {
+  name = "${var.name}-vault-kms-unseal"
+  role = aws_iam_role.pod_identity["vault"].name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt"
+      ]
+      Resource = aws_kms_key.vault_unseal.arn
+    }]
+  })
+}
+
 resource "aws_eks_pod_identity_association" "vault" {
   cluster_name    = aws_eks_cluster.main.name
   namespace       = "vault"
   service_account = "vault"
   role_arn        = aws_iam_role.pod_identity["vault"].arn
 
-  depends_on = [aws_eks_addon.managed["eks-pod-identity-agent"]]
+  depends_on = [
+    aws_eks_addon.managed["eks-pod-identity-agent"],
+    aws_iam_role_policy.vault_kms_unseal
+  ]
 }
 
 resource "aws_iam_openid_connect_provider" "eks" {

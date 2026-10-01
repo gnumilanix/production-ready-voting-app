@@ -4,18 +4,16 @@ metadata:
   name: vault-bootstrap
   namespace: argocd
 spec:
-  project: default
+  project: playground
   source:
-    repoURL: https://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/playground
-    targetRevision: HEAD
-    path: deploy/argo-specifications/vault
+    repoURL: https://github.com/gnumilanix/production-ready-voting-app.git
+    targetRevision: main
+    path: argo/vault
   destination:
     server: https://kubernetes.default.svc
-    namespace: vault
+    namespace: argocd
   syncPolicy:
     automated:
       selfHeal: true
       prune: true
-    syncOptions:
-      - CreateNamespace=true
 

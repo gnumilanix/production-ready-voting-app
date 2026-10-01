@@ -4,7 +4,7 @@ metadata:
   name: vault
   namespace: argocd
 spec:
-  project: default
+  project: playground
   source:
     repoURL: 'https://helm.releases.hashicorp.com'
     chart: vault
@@ -12,8 +12,6 @@ spec:
     helm:
       values: |
         server:
-          extraEnvironmentVars:
-            VAULT_API_ADDR: "https://example.com"
           ui:
             enabled: true
           serviceAccount:
@@ -26,7 +24,7 @@ spec:
           tolerations:
             - key: "workload-type"
               operator: "Equal"
-              value: "playground-spot-stateful"
+              value: "voting-app-spot-stateful"
               effect: "PreferNoSchedule"
           affinity:
             nodeAffinity:
@@ -36,7 +34,7 @@ spec:
                   - key: workload-type
                     operator: In
                     values:
-                    - playground-spot-stateful
+                    - voting-app-spot-stateful
           standalone:
             config: |
               ui = true
@@ -49,8 +47,8 @@ spec:
                 path = "/vault/data"
               }
               seal "awskms" {
-                region     = "ap-southeast-1" 
-                kms_key_id = "alias/playground-vault-unseal"
+                region     = "us-east-1"
+                kms_key_id = "alias/voting-app-vault-unseal"
               }
   destination:
     server: https://kubernetes.default.svc
