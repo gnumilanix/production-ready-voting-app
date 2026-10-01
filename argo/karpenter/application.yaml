@@ -15,6 +15,7 @@ spec:
       repoURL: public.ecr.aws/karpenter
       targetRevision: 1.14.1
       helm:
+        skipCrds: true
         values: |
           settings:
             clusterName: "voting-app"
