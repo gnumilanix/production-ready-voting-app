@@ -67,14 +67,13 @@
       register: karpenter_bootstrap_application
       changed_when: "' created' in karpenter_bootstrap_application.stdout or ' configured' in karpenter_bootstrap_application.stdout"
 
-    # - name: Wait for the Karpenter controller Application to sync
-    #   ansible.builtin.command:
-    #     argv:
-    #       - kubectl
-    #       - wait
-    #       - application/karpenter-controller
-    #       - --namespace
-    #       - argocd
-    #       - --for=jsonpath={.status.health.status}=Healthy
-    #       - --timeout=600s
-    #   changed_when: false
+    - name: Apply the Argo Rollouts bootstrap Application
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - "-"
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/rollout-application.yaml') }}"
+      register: argo_rollouts_bootstrap_application
+      changed_when: "' created' in argo_rollouts_bootstrap_application.stdout or ' configured' in argo_rollouts_bootstrap_application.stdout"
