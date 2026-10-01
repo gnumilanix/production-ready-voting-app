@@ -1,0 +1,7 @@
+---
+- import_playbook: install-kubectl.yml
+- import_playbook: install-helm.yml
+- import_playbook: install-eksctl.yml
+- import_playbook: install-gateway-api.yml
+- import_playbook: configure-aws-load-balancer-controller-service-account.yml
+- import_playbook: install-argocd.yml

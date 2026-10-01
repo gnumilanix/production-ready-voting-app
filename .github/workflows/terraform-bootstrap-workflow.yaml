@@ -56,13 +56,13 @@ jobs:
         uses: hashicorp/setup-terraform@v4
 
       - name: Terraform Init
-        run: >-
-          terraform init
-          -backend-config="bucket=${{ vars.STATE_BUCKET_NAME }}"
-          -backend-config="key=bootstrap/terraform.tfstate"
-          -backend-config="region=${{ vars.AWS_REGION }}"
-          -backend-config="encrypt=true"
-          -backend-config="kms_key_id=arn:aws:kms:${{ vars.AWS_REGION }}:365020425296:alias/voting-app-terraform-state"
+        uses: ./.github/actions/terraform-init
+        with:
+          working-directory: terraform/bootstrap
+          bucket: ${{ vars.STATE_BUCKET_NAME }}
+          key: bootstrap/terraform.tfstate
+          region: ${{ vars.AWS_REGION }}
+          kms_key_id: arn:aws:kms:${{ vars.AWS_REGION }}:365020425296:alias/voting-app-terraform-state
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan
@@ -90,13 +90,13 @@ jobs:
         uses: hashicorp/setup-terraform@v4
 
       - name: Terraform Init
-        run: >-
-          terraform init
-          -backend-config="bucket=${{ vars.STATE_BUCKET_NAME }}"
-          -backend-config="key=bootstrap/terraform.tfstate"
-          -backend-config="region=${{ vars.AWS_REGION }}"
-          -backend-config="encrypt=true"
-          -backend-config="kms_key_id=arn:aws:kms:${{ vars.AWS_REGION }}:365020425296:alias/voting-app-terraform-state"
+        uses: ./.github/actions/terraform-init
+        with:
+          working-directory: terraform/bootstrap
+          bucket: ${{ vars.STATE_BUCKET_NAME }}
+          key: bootstrap/terraform.tfstate
+          region: ${{ vars.AWS_REGION }}
+          kms_key_id: arn:aws:kms:${{ vars.AWS_REGION }}:365020425296:alias/voting-app-terraform-state
 
       - name: Download Plan Artifact
         uses: actions/download-artifact@v7

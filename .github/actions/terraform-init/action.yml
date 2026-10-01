@@ -1,0 +1,46 @@
+name: Terraform Backend Init
+description: Initialize Terraform with the repository's S3 backend settings
+inputs:
+  working-directory:
+    description: Terraform root directory
+    required: true
+  bucket:
+    description: S3 state bucket
+    required: true
+  key:
+    description: State object key
+    required: true
+  region:
+    description: AWS region containing the state bucket
+    required: true
+  kms_key_id:
+    description: Optional KMS key used to encrypt the state
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Initialize backend
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        STATE_BUCKET: ${{ inputs.bucket }}
+        STATE_KEY: ${{ inputs.key }}
+        STATE_REGION: ${{ inputs.region }}
+        STATE_KMS_KEY_ID: ${{ inputs.kms_key_id }}
+      run: |
+        backend_config=(
+          "-backend-config=bucket=${STATE_BUCKET}"
+          "-backend-config=key=${STATE_KEY}"
+          "-backend-config=region=${STATE_REGION}"
+          "-backend-config=use_lockfile=true"
+        )
+
+        if [[ -n "${STATE_KMS_KEY_ID}" ]]; then
+          backend_config+=(
+            "-backend-config=encrypt=true"
+            "-backend-config=kms_key_id=${STATE_KMS_KEY_ID}"
+          )
+        fi
+
+        terraform init "${backend_config[@]}"

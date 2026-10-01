@@ -58,12 +58,12 @@ jobs:
               uses: hashicorp/setup-terraform@v4
 
             - name: Terraform Init
-              run: |
-                terraform init \
-                    -backend-config="bucket=${{ vars.STATE_BUCKET_NAME }}" \
-                    -backend-config="key=deploy/terraform.tfstate" \
-                    -backend-config="region=${{ vars.AWS_REGION }}" \
-                    -backend-config="use_lockfile=true"
+              uses: ./.github/actions/terraform-init
+              with:
+                  working-directory: terraform/deploy
+                  bucket: ${{ vars.STATE_BUCKET_NAME }}
+                  key: deploy/terraform.tfstate
+                  region: ${{ vars.AWS_REGION }}
 
             - name: Terraform Plan
               run: terraform plan -out=tfplan
@@ -102,12 +102,12 @@ jobs:
               uses: hashicorp/setup-terraform@v4
 
             - name: Terraform Init
-              run: |
-                terraform init \
-                    -backend-config="bucket=${{ vars.STATE_BUCKET_NAME }}" \
-                    -backend-config="key=deploy/terraform.tfstate" \
-                    -backend-config="region=${{ vars.AWS_REGION }}" \
-                    -backend-config="use_lockfile=true"
+              uses: ./.github/actions/terraform-init
+              with:
+                  working-directory: terraform/deploy
+                  bucket: ${{ vars.STATE_BUCKET_NAME }}
+                  key: deploy/terraform.tfstate
+                  region: ${{ vars.AWS_REGION }}
 
             - name: Download Plan Artifact
               uses: actions/download-artifact@v7
@@ -142,62 +142,19 @@ jobs:
                   role-to-assume: arn:aws:iam::365020425296:role/GitHubActionsTerraformRole
                   aws-region: ${{ vars.AWS_REGION }}
 
-            - name: Install kubectl on jump server
+            - name: Configure cluster with Ansible
               uses: dawidd6/action-ansible-playbook@v9
               with:
-                  playbook: install-kubectl.yml
-                  directory: ansible
-                  key: ${{ secrets.JUMP_SERVER_PRIVATE_KEY }}
-                  inventory: |
-                      [jump_server]
-                      ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user eks_cluster_name=${{ needs.deploy.outputs.eks_cluster_name }} eks_cluster_region=${{ needs.deploy.outputs.eks_cluster_region }}
-
-            - name: Install Helm on jump server
-              uses: dawidd6/action-ansible-playbook@v9
-              with:
-                  playbook: install-helm.yml
+                  playbook: configure-cluster.yml
                   directory: ansible
                   key: ${{ secrets.JUMP_SERVER_PRIVATE_KEY }}
                   inventory: |
                       [jump_server]
                       ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user
 
-            - name: Install eksctl on jump server
-              uses: dawidd6/action-ansible-playbook@v9
-              with:
-                  playbook: install-eksctl.yml
-                  directory: ansible
-                  key: ${{ secrets.JUMP_SERVER_PRIVATE_KEY }}
-                  inventory: |
-                      [jump_server]
-                      ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user
-
-            - name: Install Gateway API CRDs
-              uses: dawidd6/action-ansible-playbook@v9
-              with:
-                  playbook: install-gateway-api.yml
-                  directory: ansible
-                  key: ${{ secrets.JUMP_SERVER_PRIVATE_KEY }}
-                  inventory: |
-                      [jump_server]
-                      ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user eks_cluster_name=${{ needs.deploy.outputs.eks_cluster_name }} eks_cluster_region=${{ needs.deploy.outputs.eks_cluster_region }} installer_role_arn=${{ needs.deploy.outputs.controller_installer_role_arn }}
-
-            - name: Configure AWS Load Balancer Controller service account
-              uses: dawidd6/action-ansible-playbook@v9
-              with:
-                  playbook: configure-aws-load-balancer-controller-service-account.yml
-                  directory: ansible
-                  key: ${{ secrets.JUMP_SERVER_PRIVATE_KEY }}
-                  inventory: |
-                      [jump_server]
-                      ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user eks_cluster_name=${{ needs.deploy.outputs.eks_cluster_name }} eks_cluster_region=${{ needs.deploy.outputs.eks_cluster_region }} vpc_id=${{ needs.deploy.outputs.vpc_id }} controller_role_arn=${{ needs.deploy.outputs.aws_load_balancer_controller_role_arn }} installer_role_arn=${{ needs.deploy.outputs.controller_installer_role_arn }}
-
-            - name: Install Argo CD
-              uses: dawidd6/action-ansible-playbook@v9
-              with:
-                  playbook: install-argocd.yml
-                  directory: ansible
-                  key: ${{ secrets.JUMP_SERVER_PRIVATE_KEY }}
-                  inventory: |
-                      [jump_server]
-                      ${{ needs.deploy.outputs.jump_server_ip }} ansible_user=ec2-user eks_cluster_name=${{ needs.deploy.outputs.eks_cluster_name }} eks_cluster_region=${{ needs.deploy.outputs.eks_cluster_region }} installer_role_arn=${{ needs.deploy.outputs.controller_installer_role_arn }}
+                      [jump_server:vars]
+                      eks_cluster_name=${{ needs.deploy.outputs.eks_cluster_name }}
+                      eks_cluster_region=${{ needs.deploy.outputs.eks_cluster_region }}
+                      vpc_id=${{ needs.deploy.outputs.vpc_id }}
+                      controller_role_arn=${{ needs.deploy.outputs.aws_load_balancer_controller_role_arn }}
+                      installer_role_arn=${{ needs.deploy.outputs.controller_installer_role_arn }}
