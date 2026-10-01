@@ -9,6 +9,7 @@ on:
       - app/seed-data/**
       - app/vote/**
       - app/worker/**
+      - .github/workflows/build-app-images.yaml
 
 permissions:
   contents: read
@@ -31,12 +32,16 @@ jobs:
           filters: |
             result:
               - 'app/result/**'
+              - '.github/workflows/build-app-images.yaml'
             seed-data:
               - 'app/seed-data/**'
+              - '.github/workflows/build-app-images.yaml'
             vote:
               - 'app/vote/**'
+              - '.github/workflows/build-app-images.yaml'
             worker:
               - 'app/worker/**'
+              - '.github/workflows/build-app-images.yaml'
 
   build:
     needs: filter
