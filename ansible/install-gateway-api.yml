@@ -4,50 +4,14 @@
   gather_facts: false
   vars:
     gateway_api_version: v1.3.0
+    installer_kubeconfig: /tmp/voting-app-gateway-api-kubeconfig
+  environment:
+    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
+    AWS_REGION: "{{ eks_cluster_region }}"
+    KUBECONFIG: "{{ installer_kubeconfig }}"
   tasks:
-    - name: Assume the Terraform-managed controller installer role
-      ansible.builtin.command:
-        argv:
-          - aws
-          - sts
-          - assume-role
-          - --role-arn
-          - "{{ installer_role_arn }}"
-          - --role-session-name
-          - ansible-gateway-api-installer
-          - --region
-          - "{{ eks_cluster_region }}"
-          - --query
-          - Credentials
-          - --output
-          - json
-      register: gateway_api_installer_credentials
-      changed_when: false
-      no_log: true
-
-    - name: Set temporary AWS credentials for Gateway API installation
-      ansible.builtin.set_fact:
-        gateway_api_installer_environment:
-          AWS_ACCESS_KEY_ID: "{{ (gateway_api_installer_credentials.stdout | from_json).AccessKeyId }}"
-          AWS_SECRET_ACCESS_KEY: "{{ (gateway_api_installer_credentials.stdout | from_json).SecretAccessKey }}"
-          AWS_SESSION_TOKEN: "{{ (gateway_api_installer_credentials.stdout | from_json).SessionToken }}"
-          AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
-          AWS_REGION: "{{ eks_cluster_region }}"
-          KUBECONFIG: /tmp/voting-app-gateway-api-installer-kubeconfig
-      no_log: true
-
-    - name: Configure kubeconfig using the installer role
-      ansible.builtin.command:
-        argv:
-          - aws
-          - eks
-          - update-kubeconfig
-          - --name
-          - "{{ eks_cluster_name }}"
-          - --region
-          - "{{ eks_cluster_region }}"
-      environment: "{{ gateway_api_installer_environment }}"
-      changed_when: false
+    - name: Configure installer kubeconfig
+      ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
 
     - name: Apply the Gateway API standard CRDs
       ansible.builtin.command:
@@ -59,7 +23,6 @@
           - "https://github.com/kubernetes-sigs/gateway-api/releases/download/{{ gateway_api_version }}/standard-install.yaml"
       register: gateway_api_crds
       changed_when: "'unchanged' not in gateway_api_crds.stdout"
-      environment: "{{ gateway_api_installer_environment }}"
 
     - name: Wait for core Gateway API CRDs to become established
       ansible.builtin.command:
@@ -73,4 +36,3 @@
           - crd/httproutes.gateway.networking.k8s.io
           - crd/referencegrants.gateway.networking.k8s.io
       changed_when: false
-      environment: "{{ gateway_api_installer_environment }}"
