@@ -11,9 +11,11 @@ spec:
     path: argo/vault
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: vault
   syncPolicy:
     automated:
       selfHeal: true
       prune: true
+    syncOptions:
+      - CreateNamespace=true
 
