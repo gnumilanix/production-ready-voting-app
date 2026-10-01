@@ -715,7 +715,7 @@ resource "aws_kms_alias" "vault_unseal" {
 }
 
 resource "aws_secretsmanager_secret" "vault_initialization" {
-  name                    = "${var.name}/vault/initialization"
+  name                    = "${var.name}/vault/init"
   description             = "Vault initialization recovery material for ${var.name}."
   recovery_window_in_days = 30
 

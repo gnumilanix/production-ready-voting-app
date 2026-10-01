@@ -7,7 +7,7 @@
     vault_namespace: vault
     vault_pod: vault-0
     vault_address: http://127.0.0.1:8200
-    vault_init_secret_id: voting-app/vault/initialization
+    vault_init_secret_id: voting-app/vault/init
     vault_postgres_user: "{{ lookup('env', 'POSTGRES_USER') }}"
     vault_postgres_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
     vault_cli_prefix:

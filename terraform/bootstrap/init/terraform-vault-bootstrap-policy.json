@@ -7,7 +7,7 @@
       "Resource": "*",
       "Condition": {
         "StringEquals": {
-          "secretsmanager:Name": "voting-app/vault/initialization"
+          "secretsmanager:Name": "voting-app/vault/init"
         }
       }
     },
@@ -21,7 +21,7 @@
         "secretsmanager:UntagResource",
         "secretsmanager:UpdateSecret"
       ],
-      "Resource": "arn:aws:secretsmanager:us-east-1:365020425296:secret:voting-app/vault/initialization-*"
+      "Resource": "arn:aws:secretsmanager:us-east-1:365020425296:secret:voting-app/vault/init-*"
     }
   ]
 }
