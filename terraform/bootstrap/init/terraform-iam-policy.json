@@ -77,5 +77,16 @@
         }
       }
     }
+    ,
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::365020425296:role/voting-app-karpenter-node-role",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "ec2.amazonaws.com"
+        }
+      }
+    }
   ]
 }
