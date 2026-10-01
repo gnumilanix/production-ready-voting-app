@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-rollouts-controller
+  namespace: argocd
+spec:
+  project: playground
+  source:
+    chart: argo-rollouts
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 2.43.0
+    helm:
+      releaseName: argo-rollouts
+      values: |
+        serviceAccount:
+          create: true
+          name: argo-rollouts
+        dashboard:
+          enabled: true
+          httproute:
+            enabled: true
+            parentRefs:
+            - group: gateway.networking.k8s.io
+              kind: Gateway
+              name: voting-gateway
+              namespace: voting
+              sectionName: argo-rollout-ui
+            rules:
+            - matches:
+                - path:
+                    type: PathPrefix
+                    value: /
+        controller:
+          trafficRouterPlugins:
+            - name: "argoproj-labs/gatewayAPI"
+              location: "https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/download/v0.17.0/gatewayapi-plugin-linux-amd64"
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argo-rollouts
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true

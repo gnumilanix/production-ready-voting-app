@@ -1,0 +1,12 @@
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: tg-config
+  namespace: argo-rollouts
+spec:
+  targetReference:
+    group: ""
+    kind: Service
+    name: argo-rollouts-dashboard
+  defaultConfiguration:
+    targetType: ip

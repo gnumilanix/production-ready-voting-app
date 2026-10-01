@@ -590,7 +590,7 @@ resource "aws_eks_pod_identity_association" "argocd_image_updater" {
 
 resource "aws_eks_pod_identity_association" "argo_rollouts" {
   cluster_name    = aws_eks_cluster.main.name
-  namespace       = "argocd"
+  namespace       = "argo-rollouts"
   service_account = "argo-rollouts"
   role_arn        = aws_iam_role.pod_identity["argocd"].arn
 

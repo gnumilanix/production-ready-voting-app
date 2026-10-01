@@ -1,0 +1,14 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-voting-gateway-to-argo
+  namespace: argo-rollouts
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: voting
+  to:
+    - group: ""
+      kind: Service
+      name: argo-rollouts-dashboard
