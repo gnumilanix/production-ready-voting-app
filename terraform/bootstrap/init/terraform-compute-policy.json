@@ -42,9 +42,13 @@
         "iam:AddRoleToInstanceProfile",
         "iam:RemoveRoleFromInstanceProfile",
         "iam:TagInstanceProfile",
-        "iam:UntagInstanceProfile"
+        "iam:UntagInstanceProfile",
+        "iam:ListInstanceProfileTags"
       ],
-      "Resource": "arn:aws:iam::365020425296:instance-profile/voting-app-jump-server-profile"
+      "Resource": [
+        "arn:aws:iam::365020425296:instance-profile/voting-app-jump-server-profile",
+        "arn:aws:iam::365020425296:instance-profile/voting-app-karpenter-node-instance-profile-role"
+      ]
     },
     {
       "Effect": "Allow",

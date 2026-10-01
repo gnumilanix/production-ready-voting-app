@@ -184,6 +184,15 @@ resource "aws_iam_instance_profile" "jump_server" {
   }
 }
 
+resource "aws_iam_instance_profile" "karpenter_node" {
+  name = local.ec2_role_names["karpenter_node_instance_profile"]
+  role = aws_iam_role.ec2_node["karpenter_node"].name
+
+  tags = {
+    Name = local.ec2_role_names["karpenter_node_instance_profile"]
+  }
+}
+
 resource "aws_key_pair" "jump_server" {
   key_name   = "${var.name}-jump-server"
   public_key = var.jump_server_public_key
@@ -337,6 +346,12 @@ resource "aws_eks_access_entry" "console_user" {
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = var.eks_console_principal_arn
   type          = "STANDARD"
+}
+
+resource "aws_eks_access_entry" "karpenter_node" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_iam_role.ec2_node["karpenter_node"].arn
+  type          = "EC2_LINUX"
 }
 
 resource "aws_eks_access_policy_association" "console_user_admin_view" {
