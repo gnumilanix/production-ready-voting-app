@@ -315,6 +315,18 @@ resource "aws_eks_access_policy_association" "jump_server_view" {
   }
 }
 
+resource "aws_eks_access_policy_association" "jump_server_admin_view" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = aws_iam_role.jump_server.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminViewPolicy"
+
+  depends_on = [aws_eks_access_entry.jump_server]
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
 resource "aws_iam_role" "controller_installer" {
   name = "${var.name}-controller-installer-role"
 
