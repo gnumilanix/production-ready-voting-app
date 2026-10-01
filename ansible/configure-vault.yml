@@ -37,7 +37,7 @@
         capabilities = ["read"]
       }
       path "sys/auth/kubernetes" {
-        capabilities = ["create", "read", "update"]
+        capabilities = ["create", "read", "update", "sudo"]
       }
       path "auth/kubernetes/config" {
         capabilities = ["create", "read", "update"]
