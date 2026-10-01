@@ -53,10 +53,17 @@ locals {
     "vpc-cni" = {
       role_key        = "vpc-cni"
       service_account = "aws-node"
+      configuration_values = jsonencode({
+        env = {
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET       = "1"
+        }
+      })
     }
     "aws-ebs-csi-driver" = {
-      role_key        = "ebs-csi"
-      service_account = "ebs-csi-controller-sa"
+      role_key             = "ebs-csi"
+      service_account      = "ebs-csi-controller-sa"
+      configuration_values = null
     }
   }
 
@@ -511,12 +518,7 @@ resource "aws_eks_addon" "with_pod_identity" {
   addon_version               = data.aws_eks_addon_version.managed[each.key].version
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "PRESERVE"
-  configuration_values = each.key == "vpc-cni" ? jsonencode({
-    env = {
-      ENABLE_PREFIX_DELEGATION = "true"
-      WARM_PREFIX_TARGET       = "1"
-    }
-  }) : null
+  configuration_values        = each.value.configuration_values
 
   pod_identity_association {
     role_arn        = aws_iam_role.pod_identity[each.value.role_key].arn
