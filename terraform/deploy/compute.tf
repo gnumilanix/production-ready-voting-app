@@ -76,15 +76,19 @@ locals {
       desired_size = 2
       min_size     = 1
       max_size     = 4
+      labels       = {}
       taints       = []
     }
     "spot-small-stateful" = {
       desired_size = 1
       min_size     = 1
       max_size     = 2
+      labels = {
+        "workload-type" = "${var.name}-spot-stateful"
+      }
       taints = [{
         key    = "workload-type"
-        value  = "spot-stateful"
+        value  = "${var.name}-spot-stateful"
         effect = "PREFER_NO_SCHEDULE"
       }]
     }
@@ -470,6 +474,7 @@ resource "aws_eks_node_group" "spot" {
 
   capacity_type  = "SPOT"
   instance_types = ["t3.small"]
+  labels         = each.value.labels
 
   launch_template {
     id      = aws_launch_template.eks_nodes.id
