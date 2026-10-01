@@ -37,6 +37,25 @@
     {
       "Effect": "Allow",
       "Action": [
+        "ec2:CreateLaunchTemplate",
+        "ec2:CreateLaunchTemplateVersion",
+        "ec2:DeleteLaunchTemplate",
+        "ec2:DeleteLaunchTemplateVersions",
+        "ec2:ModifyLaunchTemplate"
+      ],
+      "Resource": "arn:aws:ec2:us-east-1:365020425296:launch-template/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeLaunchTemplates",
+        "ec2:DescribeLaunchTemplateVersions"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "iam:CreateInstanceProfile",
         "iam:DeleteInstanceProfile",
         "iam:AddRoleToInstanceProfile",
