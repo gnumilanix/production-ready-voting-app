@@ -12,6 +12,34 @@
     - name: Configure installer kubeconfig
       ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
 
+    - name: Apply the voting namespace prerequisite
+      ansible.builtin.command:
+        argv: [kubectl, apply, -f, "-"]
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/prerequisites/namespace.yaml') }}"
+      register: voting_namespace
+      changed_when: "' created' in voting_namespace.stdout or ' configured' in voting_namespace.stdout"
+
+    - name: Apply the voting service account prerequisite
+      ansible.builtin.command:
+        argv: [kubectl, apply, -f, "-"]
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/prerequisites/serviceaccount.yaml') }}"
+      register: voting_service_account
+      changed_when: "' created' in voting_service_account.stdout or ' configured' in voting_service_account.stdout"
+
+    - name: Apply the AWS ALB GatewayClass prerequisite
+      ansible.builtin.command:
+        argv: [kubectl, apply, -f, "-"]
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/prerequisites/gatewayclass.yaml') }}"
+      register: voting_gateway_class
+      changed_when: "' created' in voting_gateway_class.stdout or ' configured' in voting_gateway_class.stdout"
+
+    - name: Apply the shared voting Gateway prerequisite
+      ansible.builtin.command:
+        argv: [kubectl, apply, -f, "-"]
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/prerequisites/gateway.yaml') }}"
+      register: voting_gateway
+      changed_when: "' created' in voting_gateway.stdout or ' configured' in voting_gateway.stdout"
+
     - name: Apply the Argo CD Image Updater Application
       ansible.builtin.command:
         argv:
