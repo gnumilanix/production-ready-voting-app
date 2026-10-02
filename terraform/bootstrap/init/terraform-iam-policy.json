@@ -23,7 +23,8 @@
         "arn:aws:iam::365020425296:role/voting-app-eks-node-role",
         "arn:aws:iam::365020425296:role/voting-app-karpenter-node-role",
         "arn:aws:iam::365020425296:role/voting-app-aws-load-balancer-controller-role",
-        "arn:aws:iam::365020425296:role/voting-app-karpenter-pod-identity-role"
+        "arn:aws:iam::365020425296:role/voting-app-karpenter-pod-identity-role",
+        "arn:aws:iam::365020425296:role/voting-app-efs-csi-pod-identity-role"
       ]
     },
     {

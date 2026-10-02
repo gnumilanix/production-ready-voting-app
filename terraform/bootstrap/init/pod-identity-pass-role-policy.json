@@ -7,7 +7,8 @@
       "Resource": [
         "arn:aws:iam::365020425296:role/voting-app-argocd-pod-identity-role",
         "arn:aws:iam::365020425296:role/voting-app-karpenter-pod-identity-role",
-        "arn:aws:iam::365020425296:role/voting-app-vault-pod-identity-role"
+        "arn:aws:iam::365020425296:role/voting-app-vault-pod-identity-role",
+        "arn:aws:iam::365020425296:role/voting-app-efs-csi-pod-identity-role"
       ],
       "Condition": {
         "StringEquals": {
