@@ -38,8 +38,3 @@ spec:
               memory: 64Mi
             limits:
               memory: 128Mi
-      tolerations:
-        - key: workload-type
-          operator: Equal
-          value: karpenter-voting-app-spot
-          effect: NoSchedule

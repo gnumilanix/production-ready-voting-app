@@ -1,0 +1,16 @@
+- op: add
+  path: /spec/template/spec/tolerations
+  value:
+    - key: workload-type
+      operator: Equal
+      value: karpenter-voting-app-spot
+      effect: NoSchedule
+- op: add
+  path: /spec/template/spec/affinity
+  value:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: karpenter.sh/nodepool
+                operator: Exists
