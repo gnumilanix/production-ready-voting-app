@@ -1,32 +1,34 @@
-
-# production-ready-voting-app
+# Production-Ready Voting App
 
 [![.github/workflows/terraform-deploy-workflow.yaml](https://github.com/gnumilanix/production-ready-voting-app/actions/workflows/terraform-deploy-workflow.yaml/badge.svg?branch=main)](https://github.com/gnumilanix/production-ready-voting-app/actions/workflows/terraform-deploy-workflow.yaml)
 
-Docker official voting app sample. But, production ready!
+This project deploys Docker's official voting app sample to AWS with production-oriented infrastructure and operations.
 
-This repo aims to make Docker official sample voting app production ready by deploying it into AWS utilizing:
+It uses:
 - EKS
-- Jump server to manage EKS
+- A jump server to manage EKS
 - Karpenter
-- ArgoCD (Including Argo rollouts and updater)
+- Argo CD, including Argo Rollouts and Image Updater
 - Vault
 - Amazon Managed Service for Prometheus (AMP) and Amazon Managed Grafana (AMG)
 
-The infrastructure itself is provisioned using terraform and configured with Ansible .
+Terraform provisions the infrastructure, and Ansible configures the cluster.
 
-Following variables and secrets needs to be configured for the repo:
+Configure the following GitHub Actions secrets and variables:
 
 **Secrets**:
 - `JUMP_SERVER_PRIVATE_KEY`
 - `JUMP_SERVER_PUBLIC_KEY`
-
-Add these as secrets in the GitHub `production` environment. Ansible writes the PostgreSQL credentials to Vault at `secret/postgres-creds`.
+- `ARGOCD_REPO_TOKEN`
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
+
+Add these secrets to the GitHub `production` environment. Ansible writes the PostgreSQL credentials to Vault at `secret/postgres-creds`.
 
 **Variables**:
 - `AWS_REGION`
 - `STATE_BUCKET_NAME`
 - `JUMP_SERVER_SSH_CIDR`
 - `EKS_CONSOLE_PRINCIPAL_ARN`
+
+**Prerequisite**: The bootstrap identity needs permission to create IAM users, roles, and policies.

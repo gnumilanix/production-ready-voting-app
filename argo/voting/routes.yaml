@@ -11,11 +11,7 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /
-          headers:
-            - type: Exact
-              name: X-App
-              value: result
+            value: /result
       backendRefs:
         - name: result
           port: 8081
