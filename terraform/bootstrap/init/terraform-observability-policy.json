@@ -51,6 +51,7 @@
       "Action": [
         "sso:ListInstances",
         "sso:DescribeInstance",
+        "sso:DescribeRegisteredRegions",
         "identitystore:DescribeGroup",
         "identitystore:CreateGroup",
         "identitystore:UpdateGroup",
