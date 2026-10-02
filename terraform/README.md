@@ -1,52 +1,32 @@
 # Terraform
 
-The Terraform configuration separates one-time backend provisioning from the app infrastructure:
+The Terraform configuration separates one-time backend provisioning from the application infrastructure:
 
-- `bootstrap/` creates the remote-state S3 bucket and KMS key. After initial provisioning, its state is stored at `bootstrap/terraform.tfstate` in that bucket.
-- `app/` is the application infrastructure root and uses the provisioned S3 bucket with native S3 state locking.
+- `bootstrap/` creates the remote-state S3 bucket and its KMS encryption key. Its state is stored in that bucket at `bootstrap/terraform.tfstate`.
+- `deploy/` is the application infrastructure root (VPC, EKS, node groups, EFS, controllers). Its state is stored in the same bucket at `voting-app/prod/terraform.tfstate`.
 
-Both roots require Terraform 1.10 or newer for S3 lockfile support.
+Both roots require Terraform 1.10 or newer for S3 native state locking (`use_lockfile`), so no DynamoDB table is needed. The state bucket has versioning, KMS encryption, public access blocking, and a TLS-only policy.
 
-## Bootstrap the backend
+## One-time manual setup (init.sh)
 
-Use an AWS identity with permission to create KMS and S3 resources. The backend bucket must exist before `terraform init` can use it. For the first run only, temporarily disable the S3 backend declaration and create the bucket using local state:
+Everything except one prerequisite is automated with GitHub Actions. The manual step is `bootstrap/init/init.sh`, which solves the chicken-and-egg problem: it creates the GitHub Actions OIDC provider, the IAM user and role (`GitHubActionsTerraformRole`) with the policies the workflows assume, and the state bucket itself.
 
-```sh
-cd terraform/bootstrap
-mv backend.tf backend.tf.s3
-terraform init -reconfigure
-terraform plan -var='aws_region=us-east-1' -var='state_bucket_name=YOUR_STATE_BUCKET_NAME'
-terraform apply -var='aws_region=us-east-1' -var='state_bucket_name=YOUR_STATE_BUCKET_NAME'
-```
-
-Use the exact bucket name and region configured as GitHub repository variables `STATE_BUCKET_NAME` and `AWS_REGION`. The name must be globally unique. Review the plan before applying; if a previous local apply partially created resources, Terraform will use the local state to continue from there.
-
-## Move bootstrap state to S3
-
-After a successful local apply creates the S3 bucket, migrate the existing local state into the same bucket. Do this before pushing the S3 backend configuration to the branch that triggers GitHub Actions, so CI does not initialize an empty state first.
+Run it once with an AWS identity that can create IAM and S3 resources:
 
 ```sh
-mv backend.tf.s3 backend.tf
-terraform init -migrate-state \
-  -backend-config='bucket=YOUR_STATE_BUCKET_NAME' \
-  -backend-config='key=bootstrap/terraform.tfstate' \
-  -backend-config='region=us-east-1' \
-  -backend-config='encrypt=true' \
-  -backend-config='kms_key_id=arn:aws:kms:us-east-1:365020425296:alias/voting-app-terraform-state'
+cd terraform/bootstrap/init
+./init.sh
 ```
 
-Run this migration before pushing the backend configuration that triggers the GitHub Actions plan/apply workflow. The state bucket is created by this root, so CI cannot use it until the one-time local bootstrap and migration are complete. Afterward, both CI jobs use the persistent `bootstrap/terraform.tfstate` key.
+Review the script before running — it creates IAM users, roles, and policies, and is not idempotent. The bucket name in the script must be globally unique and match the GitHub repository variable `STATE_BUCKET_NAME`.
 
-The bootstrap and deploy roots use separate state keys in the same bucket; no second bucket or lock table is needed. GitHub Actions uses the repository variables `STATE_BUCKET_NAME` and `AWS_REGION` to initialize the bootstrap backend consistently. Keep local state files out of Git. The S3 bucket has versioning, KMS encryption, public access blocking, enforced bucket ownership, and a TLS-only policy. S3 lockfiles are enabled by the backend configuration. Bucket and KMS key deletion are guarded by Terraform lifecycle rules.
+## Automated applies with GitHub Actions
 
-## Initialize app state
+After `init.sh` has run, both roots are applied by workflows:
 
-Copy `app/backend.hcl.example` to `app/backend.hcl` and set the bucket and region. The configured backend key defaults to `voting-app/dev/terraform.tfstate`.
+- [`bootstrap-terraform`](../.github/workflows/terraform-bootstrap-workflow.yaml) validates, plans, and applies `bootstrap/` on pushes and pull requests to `main`, or via manual dispatch.
+- [`deploy-terraform`](../.github/workflows/terraform-deploy-workflow.yaml) does the same for `deploy/` after the bootstrap workflow completes successfully, or via manual dispatch.
 
-```sh
-cd terraform/app
-terraform init -backend-config=backend.hcl
-terraform validate
-```
+Both workflows authenticate to AWS with OIDC — no stored credentials — and read the state bucket name and region from the GitHub repository variables `STATE_BUCKET_NAME` and `AWS_REGION`. The deploy workflow additionally requires the `JUMP_SERVER_SSH_CIDR` variable and the `JUMP_SERVER_PUBLIC_KEY` secret.
 
-Use an AWS role or other short-lived credentials from the standard AWS credential chain. Do not put credentials in backend configuration or commit state files. The app root is ready for resources to be added; environment-specific state keys should remain separate.
+Keep local state files out of Git, and do not put credentials in backend configuration.
