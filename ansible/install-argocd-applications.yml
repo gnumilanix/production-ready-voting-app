@@ -12,33 +12,19 @@
     - name: Configure installer kubeconfig
       ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
 
-    - name: Apply the voting namespace prerequisite
+    - name: Apply shared Gateway prerequisites
       ansible.builtin.command:
         argv: [kubectl, apply, -f, "-"]
-        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/prerequisites/namespace.yaml') }}"
-      register: voting_namespace
-      changed_when: "' created' in voting_namespace.stdout or ' configured' in voting_namespace.stdout"
-
-    - name: Apply the voting service account prerequisite
-      ansible.builtin.command:
-        argv: [kubectl, apply, -f, "-"]
-        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/prerequisites/serviceaccount.yaml') }}"
-      register: voting_service_account
-      changed_when: "' created' in voting_service_account.stdout or ' configured' in voting_service_account.stdout"
-
-    - name: Apply the AWS ALB GatewayClass prerequisite
-      ansible.builtin.command:
-        argv: [kubectl, apply, -f, "-"]
-        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/prerequisites/gatewayclass.yaml') }}"
-      register: voting_gateway_class
-      changed_when: "' created' in voting_gateway_class.stdout or ' configured' in voting_gateway_class.stdout"
-
-    - name: Apply the shared voting Gateway prerequisite
-      ansible.builtin.command:
-        argv: [kubectl, apply, -f, "-"]
-        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/prerequisites/gateway.yaml') }}"
-      register: voting_gateway
-      changed_when: "' created' in voting_gateway.stdout or ' configured' in voting_gateway.stdout"
+        stdin: "{{ lookup('file', playbook_dir ~ '/../' ~ item) }}"
+      loop:
+        - argo/prerequisites/namespace.yaml
+        - argo/prerequisites/serviceaccount.yaml
+        - argo/prerequisites/gatewayclass.yaml
+        - argo/prerequisites/gateway.yaml
+      loop_control:
+        label: "{{ item }}"
+      register: gateway_prerequisite_apply
+      changed_when: "' created' in gateway_prerequisite_apply.stdout or ' configured' in gateway_prerequisite_apply.stdout"
 
     - name: Apply the Argo CD Image Updater Application
       ansible.builtin.command:
@@ -84,57 +70,23 @@
       register: image_updater_config
       changed_when: "' created' in image_updater_config.stdout or ' configured' in image_updater_config.stdout"
 
-    - name: Apply the Karpenter bootstrap Application
+    - name: Create the EFS StorageClass for Vault
       ansible.builtin.command:
-        argv:
-          - kubectl
-          - apply
-          - -f
-          - "-"
-        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/karpenter-application.yaml') }}"
-      register: karpenter_bootstrap_application
-      changed_when: "' created' in karpenter_bootstrap_application.stdout or ' configured' in karpenter_bootstrap_application.stdout"
+        argv: [kubectl, apply, -f, "-"]
+        stdin: "{{ lookup('ansible.builtin.template', 'vault-storageclass.yaml.j2') }}"
+      register: vault_storage_class
+      changed_when: "' created' in vault_storage_class.stdout or ' configured' in vault_storage_class.stdout"
 
-    - name: Apply the Argo Rollouts bootstrap Application
+    - name: Apply remaining Argo CD bootstrap applications
       ansible.builtin.command:
-        argv:
-          - kubectl
-          - apply
-          - -f
-          - "-"
-        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/rollout-application.yaml') }}"
-      register: argo_rollouts_bootstrap_application
-      changed_when: "' created' in argo_rollouts_bootstrap_application.stdout or ' configured' in argo_rollouts_bootstrap_application.stdout"
-
-    - name: Apply the Vault bootstrap Application
-      ansible.builtin.command:
-        argv:
-          - kubectl
-          - apply
-          - -f
-          - "-"
-        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/vault-application.yaml') }}"
-      register: vault_bootstrap_application
-      changed_when: "' created' in vault_bootstrap_application.stdout or ' configured' in vault_bootstrap_application.stdout"
-
-    - name: Apply the voting application
-      ansible.builtin.command:
-        argv:
-          - kubectl
-          - apply
-          - -f
-          - "-"
-        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/voting-application.yaml') }}"
-      register: voting_application
-      changed_when: "' created' in voting_application.stdout or ' configured' in voting_application.stdout"
-
-    - name: Apply the voting application
-      ansible.builtin.command:
-        argv:
-          - kubectl
-          - apply
-          - -f
-          - "-"
-        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/voting-application.yaml') }}"
-      register: voting_application
-      changed_when: "' created' in voting_application.stdout or ' configured' in voting_application.stdout"
+        argv: [kubectl, apply, -f, "-"]
+        stdin: "{{ lookup('file', playbook_dir ~ '/../' ~ item) }}"
+      loop:
+        - argo/karpenter-application.yaml
+        - argo/rollout-application.yaml
+        - argo/vault-application.yaml
+        - argo/voting-application.yaml
+      loop_control:
+        label: "{{ item }}"
+      register: bootstrap_application_apply
+      changed_when: "' created' in bootstrap_application_apply.stdout or ' configured' in bootstrap_application_apply.stdout"
