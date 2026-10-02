@@ -14,21 +14,35 @@ It uses:
 
 Terraform provisions the infrastructure, and Ansible configures the cluster.
 
+### Project layout
+
+- **terraform/**: All infrastructure as code. `bootstrap/` provisions the Terraform state backend (S3, DynamoDB) and the IAM identity the pipeline runs as; `deploy/` provisions the application infrastructure (VPC, EKS, node groups, EFS, controllers, IAM).
+- **ansible/**: Cluster configuration playbooks run against the jump server after the infrastructure is up — installs Argo CD and its applications, and initializes/configures Vault.
+- **argo/**: Kubernetes manifests managed by Argo CD (GitOps) — the voting app, Vault, Karpenter, Rollouts, Image Updater, and shared Gateway API prerequisites.
+- **app/**: The voting app source and Dockerfiles — `vote` (Python web UI), `worker` (.NET vote processor), `result` (Node.js results UI), and `seed-data`.
+
+### Prerequisite
 Configure the following GitHub Actions secrets and variables:
 
 **Secrets**:
-- `JUMP_SERVER_PRIVATE_KEY`
-- `JUMP_SERVER_PUBLIC_KEY`
-- `ARGOCD_REPO_TOKEN`
+- `JUMP_SERVER_PRIVATE_KEY`: OpenSSH private key used by the configure job to SSH into the jump server; must correspond to `JUMP_SERVER_PUBLIC_KEY`.
+- `JUMP_SERVER_PUBLIC_KEY`: OpenSSH public key installed on the jump server; Terraform injects it into the EC2 key pair.
+- `ARGOCD_REPO_TOKEN`: GitHub token used by Argo CD / Image Updater to read this repository and write back image tags.
 
 Ansible generates the PostgreSQL password and writes it to Vault at `secret/postgres-creds`.
 
 **Variables**:
-- `AWS_REGION`
-- `STATE_BUCKET_NAME`
-- `JUMP_SERVER_SSH_CIDR`
+- `AWS_REGION`: AWS region all infrastructure is deployed to (for example `us-east-1`).
+- `STATE_BUCKET_NAME`: Name of the S3 bucket holding Terraform state; must match the bucket created by the bootstrap workflow.
+- `JUMP_SERVER_SSH_CIDR`: IPv4 CIDR allowed to SSH to the jump server (restrict to your own IP, for example `203.0.113.10/32`; do not use `0.0.0.0/0`).
 
 **Prerequisite**: The bootstrap identity needs permission to create IAM users, roles, and policies.
+
+### Workflows
+
+- **bootstrap-terraform** ([terraform-bootstrap-workflow.yaml](.github/workflows/terraform-bootstrap-workflow.yaml)): Runs on pushes/PRs to `main` that touch `terraform/bootstrap`, and provisions the foundational state backend (S3 bucket, DynamoDB locking) and IAM identity used by the deploy pipeline.
+- **deploy-terraform** ([terraform-deploy-workflow.yaml](.github/workflows/terraform-deploy-workflow.yaml)): Triggered after a successful bootstrap run (or manually); validates, plans, applies the `terraform/deploy` infrastructure (VPC, EKS, node groups, EFS, controllers), then configures the cluster with Ansible (Argo CD, Vault, app bootstrap).
+- **build-app-images** ([build-app-images.yaml](.github/workflows/build-app-images.yaml)): Runs when files under `app/` change; builds the changed component images (vote, result, worker, seed-data) and pushes them to GHCR with `main-latest` and commit-SHA tags for Argo Image Updater to roll out.
 
 ### EKS console access
 
