@@ -61,7 +61,10 @@
     },
     {
       "Effect": "Allow",
-      "Action": "sso:CreateManagedApplicationInstance",
+      "Action": [
+        "sso:CreateManagedApplicationInstance",
+        "sso:DeleteManagedApplicationInstance"
+      ],
       "Resource": "*"
     },
     {
