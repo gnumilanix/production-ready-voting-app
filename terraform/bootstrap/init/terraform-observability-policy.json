@@ -26,6 +26,13 @@
       "Effect": "Allow",
       "Action": [
         "aps:CreateWorkspace",
+        "aps:TagResource"
+      ],
+      "Resource": "arn:aws:aps:us-east-1:365020425296:/workspaces"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "aps:DescribeWorkspace",
         "aps:UpdateWorkspaceAlias",
         "aps:DeleteWorkspace",
