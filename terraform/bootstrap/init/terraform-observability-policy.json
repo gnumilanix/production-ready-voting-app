@@ -62,7 +62,7 @@
     {
       "Effect": "Allow",
       "Action": "sso:CreateManagedApplicationInstance",
-      "Resource": "arn:aws:sso::aws:applicationProvider/grafana"
+      "Resource": "*"
     },
     {
       "Effect": "Allow",
