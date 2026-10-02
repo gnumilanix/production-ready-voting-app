@@ -34,6 +34,10 @@
       "Effect": "Allow",
       "Action": [
         "aps:DescribeWorkspace",
+        "aps:DescribeLoggingConfiguration",
+        "aps:UpdateLoggingConfiguration",
+        "aps:CreateLoggingConfiguration",
+        "aps:DeleteLoggingConfiguration",
         "aps:UpdateWorkspaceAlias",
         "aps:DeleteWorkspace",
         "aps:ListTagsForResource",
