@@ -20,10 +20,8 @@ Configure the following GitHub Actions secrets and variables:
 - `JUMP_SERVER_PRIVATE_KEY`
 - `JUMP_SERVER_PUBLIC_KEY`
 - `ARGOCD_REPO_TOKEN`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
 
-Add these secrets to the GitHub `production` environment. Ansible writes the PostgreSQL credentials to Vault at `secret/postgres-creds`.
+Ansible generates the PostgreSQL password and writes it to Vault at `secret/postgres-creds`.
 
 **Variables**:
 - `AWS_REGION`

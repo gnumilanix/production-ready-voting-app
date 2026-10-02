@@ -8,8 +8,7 @@
     vault_pod: vault-0
     vault_address: http://127.0.0.1:8200
     vault_init_secret_id: voting-app/vault/init
-    vault_postgres_user: "{{ lookup('env', 'POSTGRES_USER') }}"
-    vault_postgres_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+    vault_postgres_user: postgres
     vault_cli_prefix:
       - kubectl
       - exec
@@ -178,14 +177,6 @@
       changed_when: true
       no_log: true
 
-    - name: Require PostgreSQL credentials from the GitHub Actions environment
-      ansible.builtin.assert:
-        that:
-          - vault_postgres_user | length > 0
-          - vault_postgres_password | length > 0
-        fail_msg: POSTGRES_USER and POSTGRES_PASSWORD must be configured as GitHub Actions secrets.
-      no_log: true
-
     - name: Check for the PostgreSQL credentials secret
       ansible.builtin.command:
         argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'kv', 'get', '-format=json', 'secret/postgres-creds'] }}"
@@ -194,13 +185,16 @@
       failed_when: false
       no_log: true
 
-    - name: Synchronize PostgreSQL credentials from GitHub Actions
+    - name: Generate a PostgreSQL password when none exists yet
+      ansible.builtin.set_fact:
+        vault_postgres_password: "{{ lookup('ansible.builtin.password', '/dev/null', chars=['ascii_letters', 'digits'], length=32) }}"
+      when: vault_postgres_secret.rc != 0
+      no_log: true
+
+    - name: Create the PostgreSQL credentials secret if missing
       ansible.builtin.command:
         argv: "{{ vault_cli_prefix + ['VAULT_TOKEN=' ~ vault_scoped_token, 'vault', 'kv', 'put', 'secret/postgres-creds', 'POSTGRES_USER=' ~ vault_postgres_user, 'POSTGRES_PASSWORD=' ~ vault_postgres_password] }}"
-      when: >-
-        vault_postgres_secret.rc != 0 or
-        (vault_postgres_secret.stdout | from_json).data.data.POSTGRES_USER != vault_postgres_user or
-        (vault_postgres_secret.stdout | from_json).data.data.POSTGRES_PASSWORD != vault_postgres_password
+      when: vault_postgres_secret.rc != 0
       changed_when: true
       no_log: true
 

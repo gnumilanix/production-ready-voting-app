@@ -148,8 +148,6 @@ jobs:
               uses: dawidd6/action-ansible-playbook@v9
               env:
                   ARGOCD_REPO_TOKEN: ${{ secrets.ARGOCD_REPO_TOKEN }}
-                  POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-                  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
               with:
                   playbook: configure-cluster.yml
                   directory: ansible
