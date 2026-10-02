@@ -1,0 +1,38 @@
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: vote-tg-config
+  namespace: voting
+spec:
+  targetReference:
+    group: ""
+    kind: Service
+    name: vote
+  defaultConfiguration:
+    targetType: ip
+---
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: vote-preview-tg-config
+  namespace: voting
+spec:
+  targetReference:
+    group: ""
+    kind: Service
+    name: vote-preview
+  defaultConfiguration:
+    targetType: ip
+---
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: result-tg-config
+  namespace: voting
+spec:
+  targetReference:
+    group: ""
+    kind: Service
+    name: result
+  defaultConfiguration:
+    targetType: ip
