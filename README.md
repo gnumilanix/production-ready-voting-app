@@ -9,7 +9,7 @@ It uses:
 - A jump server to manage EKS
 - Karpenter
 - Argo CD, including Argo Rollouts and Image Updater
-- Vault
+- Vault (data stored on Amazon EFS)
 - Amazon Managed Service for Prometheus (AMP) and Amazon Managed Grafana (AMG)
 
 Terraform provisions the infrastructure, and Ansible configures the cluster.

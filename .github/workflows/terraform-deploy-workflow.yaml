@@ -89,6 +89,7 @@ jobs:
             aws_load_balancer_controller_role_arn: ${{ steps.export-tf-outputs.outputs.AWS_LOAD_BALANCER_CONTROLLER_ROLE_ARN }}
             controller_installer_role_arn: ${{ steps.export-tf-outputs.outputs.CONTROLLER_INSTALLER_ROLE_ARN }}
             vpc_id: ${{ steps.export-tf-outputs.outputs.VPC_ID }}
+            vault_efs_file_system_id: ${{ steps.export-tf-outputs.outputs.VAULT_EFS_FILE_SYSTEM_ID }}
         steps:
             - name: Checkout Code
               uses: actions/checkout@v7
@@ -128,6 +129,7 @@ jobs:
                 echo "AWS_LOAD_BALANCER_CONTROLLER_ROLE_ARN=$(terraform output -raw aws_load_balancer_controller_role_arn)" >> "$GITHUB_OUTPUT"
                 echo "CONTROLLER_INSTALLER_ROLE_ARN=$(terraform output -raw controller_installer_role_arn)" >> "$GITHUB_OUTPUT"
                 echo "VPC_ID=$(terraform output -raw vpc_id)" >> "$GITHUB_OUTPUT"
+                echo "VAULT_EFS_FILE_SYSTEM_ID=$(terraform output -raw vault_efs_file_system_id)" >> "$GITHUB_OUTPUT"
 
     configure:
         runs-on: ubuntu-latest
@@ -161,5 +163,6 @@ jobs:
                       eks_cluster_name=${{ needs.deploy.outputs.eks_cluster_name }}
                       eks_cluster_region=${{ needs.deploy.outputs.eks_cluster_region }}
                       vpc_id=${{ needs.deploy.outputs.vpc_id }}
+                      vault_efs_file_system_id=${{ needs.deploy.outputs.vault_efs_file_system_id }}
                       controller_role_arn=${{ needs.deploy.outputs.aws_load_balancer_controller_role_arn }}
                       installer_role_arn=${{ needs.deploy.outputs.controller_installer_role_arn }}

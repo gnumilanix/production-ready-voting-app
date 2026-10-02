@@ -92,3 +92,8 @@ output "controller_installer_role_arn" {
   description = "IAM role assumed by the jump server to install the AWS Load Balancer Controller."
   value       = aws_iam_role.controller_installer.arn
 }
+
+output "vault_efs_file_system_id" {
+  description = "EFS file system ID backing the Vault data volume."
+  value       = aws_efs_file_system.vault.id
+}

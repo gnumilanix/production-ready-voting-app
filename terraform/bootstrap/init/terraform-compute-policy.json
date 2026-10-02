@@ -37,6 +37,27 @@
     {
       "Effect": "Allow",
       "Action": [
+        "elasticfilesystem:CreateFileSystem",
+        "elasticfilesystem:DeleteFileSystem",
+        "elasticfilesystem:DescribeFileSystems",
+        "elasticfilesystem:CreateMountTarget",
+        "elasticfilesystem:DeleteMountTarget",
+        "elasticfilesystem:DescribeMountTargets",
+        "elasticfilesystem:DescribeMountTargetSecurityGroups",
+        "elasticfilesystem:ModifyMountTargetSecurityGroups",
+        "elasticfilesystem:DescribeLifecycleConfiguration",
+        "elasticfilesystem:PutLifecycleConfiguration",
+        "elasticfilesystem:DescribeFileSystemPolicy",
+        "elasticfilesystem:DescribeBackupPolicy",
+        "elasticfilesystem:TagResource",
+        "elasticfilesystem:UntagResource",
+        "elasticfilesystem:ListTagsForResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "ec2:CreateLaunchTemplate",
         "ec2:CreateLaunchTemplateVersion",
         "ec2:DeleteLaunchTemplate",

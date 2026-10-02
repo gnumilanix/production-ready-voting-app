@@ -28,6 +28,7 @@ locals {
     "adot-prom-metrics",
     "argocd",
     "ebs-csi",
+    "efs-csi",
     "vpc-cni",
     "external-dns",
     "prometheus-exporter",
@@ -42,6 +43,7 @@ locals {
     "metrics-server",
     "eks-node-monitoring-agent",
     "aws-ebs-csi-driver",
+    "aws-efs-csi-driver",
     "eks-pod-identity-agent"
   ])
 
@@ -59,6 +61,11 @@ locals {
     "aws-ebs-csi-driver" = {
       role_key             = "ebs-csi"
       service_account      = "ebs-csi-controller-sa"
+      configuration_values = null
+    }
+    "aws-efs-csi-driver" = {
+      role_key             = "efs-csi"
+      service_account      = "efs-csi-controller-sa"
       configuration_values = null
     }
   }

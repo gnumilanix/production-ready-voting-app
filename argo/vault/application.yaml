@@ -20,7 +20,7 @@ spec:
           dataStorage:
             enabled: true
             size: 10Gi
-            storageClass: "gp2"
+            storageClass: "efs-vault"
           tolerations:
             - key: "workload-type"
               operator: "Equal"

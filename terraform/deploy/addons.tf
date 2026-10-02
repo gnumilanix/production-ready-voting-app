@@ -16,6 +16,11 @@ resource "aws_iam_role_policy_attachment" "ebs_csi" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicyV2"
 }
 
+resource "aws_iam_role_policy_attachment" "efs_csi" {
+  role       = aws_iam_role.pod_identity["efs-csi"].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy"
+}
+
 resource "aws_eks_addon" "managed" {
   for_each = setsubtract(
     local.eks_addon_names,
@@ -65,7 +70,8 @@ resource "aws_eks_addon" "with_pod_identity" {
   depends_on = [
     aws_eks_addon.managed["eks-pod-identity-agent"],
     aws_iam_role_policy_attachment.vpc_cni,
-    aws_iam_role_policy_attachment.ebs_csi
+    aws_iam_role_policy_attachment.ebs_csi,
+    aws_iam_role_policy_attachment.efs_csi
   ]
 }
 
