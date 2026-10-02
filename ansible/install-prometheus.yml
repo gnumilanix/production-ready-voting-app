@@ -1,0 +1,57 @@
+---
+- name: Install kube-prometheus-stack (AMP remote-write agent)
+  hosts: all
+  gather_facts: false
+  vars:
+    monitoring_namespace: monitoring
+    prometheus_values_file: /tmp/voting-app-kube-prometheus-stack-values.yaml
+    installer_kubeconfig: /tmp/voting-app-prometheus-kubeconfig
+  environment:
+    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
+    AWS_REGION: "{{ eks_cluster_region }}"
+    KUBECONFIG: "{{ installer_kubeconfig }}"
+  tasks:
+    - name: Configure installer kubeconfig
+      ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
+
+    - name: Copy kube-prometheus-stack Helm values to the jump server
+      ansible.builtin.template:
+        src: values/kube-prometheus-stack.yaml
+        dest: "{{ prometheus_values_file }}"
+        mode: "0644"
+
+    - name: Add the Prometheus community Helm chart repository
+      ansible.builtin.command:
+        argv:
+          - helm
+          - repo
+          - add
+          - prometheus-community
+          - https://prometheus-community.github.io/helm-charts
+          - --force-update
+      changed_when: false
+
+    - name: Update the Prometheus community Helm chart repository
+      ansible.builtin.command:
+        argv:
+          - helm
+          - repo
+          - update
+          - prometheus-community
+      changed_when: false
+
+    - name: Install or upgrade kube-prometheus-stack
+      ansible.builtin.command:
+        argv:
+          - helm
+          - upgrade
+          - --install
+          - kube-metrics-amp
+          - prometheus-community/kube-prometheus-stack
+          - --namespace
+          - "{{ monitoring_namespace }}"
+          - --create-namespace
+          - --values
+          - "{{ prometheus_values_file }}"
+      register: prometheus_helm_install
+      changed_when: "'has been installed' in prometheus_helm_install.stdout or 'has been upgraded' in prometheus_helm_install.stdout"

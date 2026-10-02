@@ -1,0 +1,22 @@
+prometheus:
+  agentMode: true
+  prometheusSpec:
+    externalLabels:
+      cluster: "{{ eks_cluster_name }}"
+    remoteWrite:
+      - url: "{{ amp_remote_write_url }}"
+        sigv4:
+          region: "{{ eks_cluster_region }}"
+        queueConfig:
+          maxSamplesPerSend: 1000
+          maxShards: 200
+  prometheusEmptyDir: {}
+  serviceAccount:
+    create: true
+    name: kube-metrics-amp-prometheus
+kubeStateMetrics:
+  enabled: true
+nodeExporter:
+  enabled: true
+grafana:
+  enabled: false

@@ -12,7 +12,7 @@ It uses:
 - Vault (data stored on Amazon EFS)
 - Amazon Managed Service for Prometheus (AMP) and Amazon Managed Grafana (AMG)
 
-Terraform provisions the infrastructure, and Ansible configures the cluster.
+Terraform provisions the infrastructure, and Ansible configures the cluster. A `kube-prometheus-stack` agent (no in-cluster Grafana) scrapes cluster metrics and remote-writes them to AMP via EKS Pod Identity.
 
 ### Architecture overview
 
