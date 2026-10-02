@@ -107,3 +107,8 @@ output "amp_remote_write_url" {
   description = "Remote-write endpoint of the AMP workspace for the Prometheus agent."
   value       = "${aws_prometheus_workspace.main.prometheus_endpoint}api/v1/remote_write"
 }
+
+output "grafana_workspace_endpoint" {
+  description = "Endpoint URL of the AMG Grafana workspace."
+  value       = aws_grafana_workspace.main.endpoint
+}

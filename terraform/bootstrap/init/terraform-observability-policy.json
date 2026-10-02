@@ -45,6 +45,32 @@
         "aps:UntagResource"
       ],
       "Resource": "arn:aws:aps:us-east-1:365020425296:workspace/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sso:ListInstances",
+        "sso:DescribeInstance",
+        "identitystore:GetGroupId",
+        "identitystore:DescribeGroup"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "grafana:CreateWorkspace",
+        "grafana:DescribeWorkspace",
+        "grafana:UpdateWorkspace",
+        "grafana:DeleteWorkspace",
+        "grafana:ListTagsForResource",
+        "grafana:TagResource",
+        "grafana:UntagResource",
+        "grafana:AssociateRole",
+        "grafana:DisassociateRole",
+        "grafana:ListPermissions"
+      ],
+      "Resource": "*"
     }
   ]
 }
