@@ -36,3 +36,15 @@ spec:
     name: result
   defaultConfiguration:
     targetType: ip
+    healthCheckConfig:
+      healthCheckPath: /result
+      healthCheckProtocol: HTTP
+      matcher:
+        httpCode: "200"
+    targetGroupAttributes:
+      - key: stickiness.enabled
+        value: "true"
+      - key: stickiness.type
+        value: lb_cookie
+      - key: stickiness.lb_cookie.duration_seconds
+        value: "86400"
