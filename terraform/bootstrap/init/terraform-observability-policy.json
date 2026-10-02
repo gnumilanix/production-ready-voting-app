@@ -80,6 +80,7 @@
         "grafana:UntagResource",
         "grafana:AssociateRole",
         "grafana:DisassociateRole",
+        "grafana:UpdatePermissions",
         "grafana:ListPermissions"
       ],
       "Resource": "*"
