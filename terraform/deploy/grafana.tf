@@ -53,11 +53,7 @@ resource "aws_grafana_workspace" "main" {
   }
 }
 
-# Grant the Identity Center admin group Grafana admin rights.
-resource "aws_grafana_role_association" "admin" {
-  provider = aws.grafana
-
-  workspace_id = aws_grafana_workspace.main.id
-  role         = "ADMIN"
-  group_ids    = [aws_identitystore_group.grafana_admins.group_id]
-}
+# The workspace is created in SERVICE_MANAGED mode, but IAM Identity Center
+# group-to-Grafana admin assignment is not reliable via Terraform when the AWS
+# managed application update path rejects the SSO mutation. Assign the group in
+# the AWS console or Grafana console instead.
