@@ -97,6 +97,12 @@ resource "aws_iam_role" "eks_console" {
     }]
   })
 
+  # Trust-policy principals are managed out-of-band (IAM console/CLI); don't let
+  # Terraform revert them on subsequent applies.
+  lifecycle {
+    ignore_changes = [assume_role_policy]
+  }
+
   tags = {
     Name = "${var.name}-eks-console-role"
   }
