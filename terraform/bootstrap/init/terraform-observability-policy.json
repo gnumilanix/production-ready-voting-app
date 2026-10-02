@@ -69,6 +69,7 @@
       "Action": [
         "grafana:CreateWorkspace",
         "grafana:DescribeWorkspace",
+        "grafana:DescribeWorkspaceConfiguration",
         "grafana:UpdateWorkspace",
         "grafana:DeleteWorkspace",
         "grafana:ListTagsForResource",
