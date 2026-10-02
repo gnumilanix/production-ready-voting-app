@@ -116,3 +116,25 @@
         stdin: "{{ lookup('file', playbook_dir ~ '/../argo/vault-application.yaml') }}"
       register: vault_bootstrap_application
       changed_when: "' created' in vault_bootstrap_application.stdout or ' configured' in vault_bootstrap_application.stdout"
+
+    - name: Apply the voting application
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - "-"
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/voting-application.yaml') }}"
+      register: voting_application
+      changed_when: "' created' in voting_application.stdout or ' configured' in voting_application.stdout"
+
+    - name: Apply the voting application
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - "-"
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/voting-application.yaml') }}"
+      register: voting_application
+      changed_when: "' created' in voting_application.stdout or ' configured' in voting_application.stdout"

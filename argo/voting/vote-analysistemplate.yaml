@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: vote-analysistemplate
+  namespace: voting
+spec:
+  metrics:
+    - name: check-homepage
+      interval: 10s
+      count: 3
+      successCondition: result == "200"
+      provider:
+        web:
+          url: http://vote.voting.svc:8080

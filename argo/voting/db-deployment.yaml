@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  namespace: voting
+  labels:
+    app: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: voting-role
+        vault.hashicorp.com/agent-inject-secret-config: secret/data/postgres-creds
+        vault.hashicorp.com/agent-inject-template-config: |
+          {{- with secret "secret/data/postgres-creds" -}}
+          export POSTGRES_USER="{{ .Data.data.POSTGRES_USER }}"
+          export POSTGRES_PASSWORD="{{ .Data.data.POSTGRES_PASSWORD }}"
+          {{- end -}}
+    spec:
+      serviceAccountName: voting
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          command: ["sh", "-c"]
+          args: [". /vault/secrets/config && exec docker-entrypoint.sh postgres"]
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: db-data
+          emptyDir: {}
+      tolerations:
+        - key: workload-type
+          operator: Equal
+          value: voting-app-spot-stateful
+          effect: PreferNoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: workload-type
+                    operator: In
+                    values:
+                      - voting-app-spot-stateful

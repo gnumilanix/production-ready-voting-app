@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: vote
+  namespace: voting
+  labels:
+    app: vote
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: vote
+  template:
+    metadata:
+      labels:
+        app: vote
+    spec:
+      containers:
+        - name: vote
+          image: ghcr.io/gnumilanix/production-ready-voting-app-vote:main-latest
+          ports:
+            - name: vote
+              containerPort: 80
+          env:
+            - name: OPTION_A
+              value: Cats
+            - name: OPTION_B
+              value: Dogs
+          resources:
+            requests:
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+      tolerations:
+        - key: workload-type
+          operator: Equal
+          value: karpenter-voting-app-spot
+          effect: NoSchedule
+      nodeSelector:
+        karpenter.sh/nodepool: voting-app-nodepool
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          minDomains: 2
+          labelSelector:
+            matchLabels:
+              app: vote
+  strategy:
+    blueGreen:
+      autoPromotionEnabled: false
+      activeService: vote
+      previewService: vote-preview
+      previewReplicaCount: 1
+      prePromotionAnalysis:
+        templates:
+          - templateName: vote-analysistemplate

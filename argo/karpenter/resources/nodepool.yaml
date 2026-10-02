@@ -29,7 +29,7 @@ spec:
           values: ["2"]
       taints:
         - key: "workload-type"
-          value: "karpenter-playground-spot"
+          value: "karpenter-voting-app-spot"
           effect: NoSchedule
   limits:
     cpu: "16"

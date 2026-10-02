@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: voting
+  namespace: argocd
+spec:
+  project: playground
+  source:
+    repoURL: https://github.com/gnumilanix/production-ready-voting-app.git
+    targetRevision: main
+    path: argo/voting
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: voting
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
