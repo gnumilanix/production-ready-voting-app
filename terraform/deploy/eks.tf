@@ -81,9 +81,30 @@ resource "aws_eks_access_policy_association" "jump_server_admin_view" {
   }
 }
 
+resource "aws_iam_role" "eks_console" {
+  name = "${var.name}-eks-console-role"
+
+  # Trust policy seeds with the account root so the role is creatable; grant real
+  # users/roles console access by adding their ARNs here via the IAM console or CLI.
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+
+  tags = {
+    Name = "${var.name}-eks-console-role"
+  }
+}
+
 resource "aws_eks_access_entry" "console_user" {
   cluster_name  = aws_eks_cluster.main.name
-  principal_arn = var.eks_console_principal_arn
+  principal_arn = aws_iam_role.eks_console.arn
   type          = "STANDARD"
 }
 

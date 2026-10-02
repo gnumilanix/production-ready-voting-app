@@ -93,6 +93,11 @@ output "controller_installer_role_arn" {
   value       = aws_iam_role.controller_installer.arn
 }
 
+output "eks_console_role_arn" {
+  description = "IAM role users assume to get read-only EKS console access."
+  value       = aws_iam_role.eks_console.arn
+}
+
 output "vault_efs_file_system_id" {
   description = "EFS file system ID backing the Vault data volume."
   value       = aws_efs_file_system.vault.id

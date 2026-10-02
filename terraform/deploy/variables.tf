@@ -32,13 +32,3 @@ variable "jump_server_public_key" {
     error_message = "jump_server_public_key must be an OpenSSH RSA, Ed25519, or ECDSA public key."
   }
 }
-
-variable "eks_console_principal_arn" {
-  description = "IAM user or role ARN granted read-only EKS console access."
-  type        = string
-
-  validation {
-    condition     = can(regex("^arn:aws:iam::[0-9]{12}:(user|role)/.+$", var.eks_console_principal_arn))
-    error_message = "eks_console_principal_arn must be an IAM user or role ARN."
-  }
-}

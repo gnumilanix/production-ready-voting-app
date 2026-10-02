@@ -29,6 +29,9 @@ Add these secrets to the GitHub `production` environment. Ansible writes the Pos
 - `AWS_REGION`
 - `STATE_BUCKET_NAME`
 - `JUMP_SERVER_SSH_CIDR`
-- `EKS_CONSOLE_PRINCIPAL_ARN`
 
 **Prerequisite**: The bootstrap identity needs permission to create IAM users, roles, and policies.
+
+### EKS console access
+
+Terraform creates an IAM role `${var.name}-eks-console-role` with read-only cluster access. To grant a user or role EKS console access, add its ARN to that role's trust policy (in the AWS IAM console or via `aws iam update-assume-role-policy`), then have the user assume the role with a console role-switch.
