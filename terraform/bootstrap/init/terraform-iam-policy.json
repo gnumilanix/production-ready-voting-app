@@ -108,6 +108,16 @@
           "iam:PassedToService": "pods.eks.amazonaws.com"
         }
       }
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::365020425296:role/voting-app-grafana-workspace-role",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "grafana.amazonaws.com"
+        }
+      }
     }
   ]
 }

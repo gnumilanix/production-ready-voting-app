@@ -14,12 +14,33 @@ resource "aws_identitystore_group" "grafana_admins" {
   description       = "Administrators for the Amazon Managed Grafana workspace."
 }
 
+resource "aws_iam_role" "grafana_workspace" {
+  name = "${var.name}-grafana-workspace-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "grafana.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+
+  tags = {
+    Name      = "${var.name}-grafana-workspace-role"
+    Component = "grafana"
+  }
+}
+
 resource "aws_grafana_workspace" "main" {
   name                     = "${var.name}-grafana"
   description              = "Grafana for ${var.name} AMP metrics."
   account_access_type      = "CURRENT_ACCOUNT"
   authentication_providers = ["AWS_SSO"]
   permission_type          = "SERVICE_MANAGED"
+  role_arn                 = aws_iam_role.grafana_workspace.arn
   data_sources             = ["PROMETHEUS"]
 
   tags = {
