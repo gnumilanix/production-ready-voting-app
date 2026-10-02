@@ -1,7 +1,6 @@
-# IAM Identity Center (SSO) instance used for AMG authentication. An IdC
-# instance cannot be created by Terraform — enable it once in us-east-1
-# (console or `aws sso-admin create-instance`), then it is referenced here.
-# AMG requires the workspace to be in the same region as the IdC instance.
+# IAM Identity Center (SSO) organization instance used for AMG authentication.
+# Enable it once from the AWS Organizations management account in the console
+# in us-east-1; Terraform discovers the instance and its GrafanaAdmins group.
 data "aws_ssoadmin_instances" "main" {}
 
 locals {
@@ -9,15 +8,10 @@ locals {
   sso_instance_arn  = tolist(data.aws_ssoadmin_instances.main.arns)[0]
 }
 
-data "aws_identitystore_group" "grafana_admins" {
+resource "aws_identitystore_group" "grafana_admins" {
   identity_store_id = local.identity_store_id
-
-  alternate_identifier {
-    unique_attribute {
-      attribute_path  = "DisplayName"
-      attribute_value = "GrafanaAdmins"
-    }
-  }
+  display_name      = "GrafanaAdmins"
+  description       = "Administrators for the Amazon Managed Grafana workspace."
 }
 
 resource "aws_grafana_workspace" "main" {
@@ -37,5 +31,5 @@ resource "aws_grafana_workspace" "main" {
 resource "aws_grafana_role_association" "admin" {
   workspace_id = aws_grafana_workspace.main.id
   role         = "ADMIN"
-  group_ids    = [data.aws_identitystore_group.grafana_admins.group_id]
+  group_ids    = [aws_identitystore_group.grafana_admins.group_id]
 }

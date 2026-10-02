@@ -51,8 +51,10 @@
       "Action": [
         "sso:ListInstances",
         "sso:DescribeInstance",
-        "identitystore:GetGroupId",
-        "identitystore:DescribeGroup"
+        "identitystore:DescribeGroup",
+        "identitystore:CreateGroup",
+        "identitystore:UpdateGroup",
+        "identitystore:DeleteGroup"
       ],
       "Resource": "*"
     },

@@ -7,9 +7,13 @@ The Terraform configuration separates one-time backend provisioning from the app
 
 Both roots require Terraform 1.10 or newer for S3 native state locking (`use_lockfile`), so no DynamoDB table is needed. The state bucket has versioning, KMS encryption, public access blocking, and a TLS-only policy.
 
-## One-time manual setup (init.sh)
+## One-time manual setup
 
-Everything except one prerequisite is automated with GitHub Actions. The manual step is `bootstrap/init/init.sh`, which solves the chicken-and-egg problem: it creates the GitHub Actions OIDC provider, the IAM user and role (`GitHubActionsTerraformRole`) with the policies the workflows assume, and the state bucket itself.
+Before the deploy workflow can succeed, enable an IAM Identity Center organization instance in the AWS Organizations management account using the AWS console. Enable it in the same region as the Grafana workspace (`us-east-1`); Terraform reads the instance but does not create it.
+
+Terraform creates the Identity Center group `GrafanaAdmins` and grants it Grafana administrator access. Add or remove group members in the AWS console; membership changes do not require Terraform changes.
+
+The bootstrap script `bootstrap/init/init.sh` is also a one-time manual step. It creates the GitHub Actions OIDC provider, the IAM user and role (`GitHubActionsTerraformRole`) with the policies the workflows assume, and the state bucket itself.
 
 Run it once with an AWS identity that can create IAM and S3 resources:
 
