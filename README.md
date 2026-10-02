@@ -14,6 +14,51 @@ It uses:
 
 Terraform provisions the infrastructure, and Ansible configures the cluster.
 
+### Architecture overview
+
+```mermaid
+flowchart TD
+    subgraph GHA["GitHub Actions"]
+        BOOT["bootstrap-terraform<br/>state backend + IAM identity"]
+        DEPLOY["deploy-terraform<br/>infrastructure + cluster config"]
+        BUILD["build-app-images"]
+    end
+
+    GHCR["GHCR image registry"]
+
+    subgraph AWS["AWS"]
+        STATE[("S3 + KMS<br/>Terraform state")]
+        subgraph VPC["VPC"]
+            JUMP["Jump server"]
+            subgraph EKS["EKS cluster (Karpenter-managed nodes)"]
+                ARGO["Argo CD<br/>+ Rollouts + Image Updater"]
+                VAULT["Vault (EFS-backed)"]
+                subgraph APP["Voting app"]
+                    VOTE["vote (Python)"]
+                    REDIS[("Redis")]
+                    WORKER["worker (.NET)"]
+                    DB[("PostgreSQL")]
+                    RESULT["result (Node.js)"]
+                end
+            end
+        end
+        OBS["AMP + AMG"]
+    end
+
+    BOOT -->|creates| STATE
+    BOOT -->|workflow_run| DEPLOY
+    DEPLOY -->|Terraform apply| VPC
+    DEPLOY -->|Ansible over SSH| JUMP
+    JUMP -->|installs| ARGO
+    JUMP -->|initializes + configures| VAULT
+    BUILD -->|pushes images| GHCR
+    GHCR -->|new tags| ARGO
+    ARGO -->|GitOps sync of argo/ manifests| APP
+    VAULT -->|postgres-creds| APP
+    VOTE --> REDIS --> WORKER --> DB --> RESULT
+    EKS -.->|metrics| OBS
+```
+
 ### Project layout
 
 - **terraform/**: All infrastructure as code. `bootstrap/` provisions the Terraform state backend (S3, DynamoDB) and the IAM identity the pipeline runs as; `deploy/` provisions the application infrastructure (VPC, EKS, node groups, EFS, controllers, IAM).
