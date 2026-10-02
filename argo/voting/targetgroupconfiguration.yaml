@@ -40,7 +40,7 @@ spec:
       healthCheckPath: /result
       healthCheckProtocol: HTTP
       matcher:
-        httpCode: "200"
+        httpCode: "200,301"
     targetGroupAttributes:
       - key: stickiness.enabled
         value: "true"
