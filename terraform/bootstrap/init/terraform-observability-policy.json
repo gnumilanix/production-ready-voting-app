@@ -21,6 +21,19 @@
         "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/*",
         "arn:aws:ssm:us-east-1::parameter/aws/service/eks/optimized-ami/*/amazon-linux-2023/x86_64/standard/recommended/image_id"
       ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "aps:CreateWorkspace",
+        "aps:DescribeWorkspace",
+        "aps:UpdateWorkspaceAlias",
+        "aps:DeleteWorkspace",
+        "aps:ListTagsForResource",
+        "aps:TagResource",
+        "aps:UntagResource"
+      ],
+      "Resource": "arn:aws:aps:us-east-1:365020425296:workspace/*"
     }
   ]
 }

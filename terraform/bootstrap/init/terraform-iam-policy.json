@@ -24,7 +24,8 @@
         "arn:aws:iam::365020425296:role/voting-app-karpenter-node-role",
         "arn:aws:iam::365020425296:role/voting-app-aws-load-balancer-controller-role",
         "arn:aws:iam::365020425296:role/voting-app-karpenter-pod-identity-role",
-        "arn:aws:iam::365020425296:role/voting-app-efs-csi-pod-identity-role"
+        "arn:aws:iam::365020425296:role/voting-app-efs-csi-pod-identity-role",
+        "arn:aws:iam::365020425296:role/voting-app-prometheus-exporter-pod-identity-role"
       ]
     },
     {
@@ -40,7 +41,8 @@
       ],
       "Resource": [
         "arn:aws:iam::365020425296:policy/voting-app-aws-load-balancer-controller-policy",
-        "arn:aws:iam::365020425296:policy/voting-app-karpenter-controller-policy"
+        "arn:aws:iam::365020425296:policy/voting-app-karpenter-controller-policy",
+        "arn:aws:iam::365020425296:policy/voting-app-amp-remote-write-policy"
       ]
     },
     {
@@ -88,6 +90,22 @@
       "Condition": {
         "StringEquals": {
           "iam:PassedToService": "ec2.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::365020425296:role/voting-app-argocd-pod-identity-role",
+        "arn:aws:iam::365020425296:role/voting-app-karpenter-pod-identity-role",
+        "arn:aws:iam::365020425296:role/voting-app-vault-pod-identity-role",
+        "arn:aws:iam::365020425296:role/voting-app-efs-csi-pod-identity-role",
+        "arn:aws:iam::365020425296:role/voting-app-prometheus-exporter-pod-identity-role"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "pods.eks.amazonaws.com"
         }
       }
     }
