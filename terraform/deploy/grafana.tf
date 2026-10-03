@@ -37,6 +37,25 @@ resource "aws_iam_role" "grafana_workspace" {
   }
 }
 
+resource "aws_iam_role_policy" "grafana_amp_query" {
+  name = "${var.name}-grafana-amp-query"
+  role = aws_iam_role.grafana_workspace.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "aps:QueryMetrics",
+        "aps:GetLabels",
+        "aps:GetSeries",
+        "aps:GetMetricMetadata"
+      ]
+      Resource = aws_prometheus_workspace.main.arn
+    }]
+  })
+}
+
 resource "aws_grafana_workspace" "main" {
   provider = aws.grafana
 
@@ -48,9 +67,19 @@ resource "aws_grafana_workspace" "main" {
   role_arn                 = aws_iam_role.grafana_workspace.arn
   data_sources             = ["PROMETHEUS"]
 
+  depends_on = [aws_iam_role_policy.grafana_amp_query]
+
   tags = {
     Name = "${var.name}-grafana"
   }
+}
+
+resource "aws_grafana_workspace_service_account" "datasource_provisioner" {
+  provider = aws.grafana
+
+  name         = "${var.name}-datasource-provisioner"
+  grafana_role = "ADMIN"
+  workspace_id = aws_grafana_workspace.main.id
 }
 
 # The workspace is created in SERVICE_MANAGED mode, but IAM Identity Center

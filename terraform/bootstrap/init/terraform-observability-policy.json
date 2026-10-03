@@ -81,7 +81,13 @@
         "grafana:AssociateRole",
         "grafana:DisassociateRole",
         "grafana:UpdatePermissions",
-        "grafana:ListPermissions"
+        "grafana:ListPermissions",
+        "grafana:CreateWorkspaceServiceAccount",
+        "grafana:DescribeWorkspaceServiceAccount",
+        "grafana:DeleteWorkspaceServiceAccount",
+        "grafana:CreateWorkspaceServiceAccountToken",
+        "grafana:DescribeWorkspaceServiceAccountToken",
+        "grafana:DeleteWorkspaceServiceAccountToken"
       ],
       "Resource": "*"
     }

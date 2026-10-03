@@ -1,0 +1,140 @@
+---
+- name: Configure Amazon Managed Grafana AMP data source
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    grafana_region: us-east-1
+    datasource_uid: amazon-managed-prometheus
+    datasource_name: Amazon-Managed-Prometheus
+    datasource_url: "https://aps-workspaces.{{ amp_region }}.amazonaws.com/workspaces/{{ amp_workspace_id }}"
+  tasks:
+    - name: Configure AMP data source with an ephemeral token
+      block:
+        - name: Read Grafana workspace endpoint
+          ansible.builtin.command:
+            argv:
+              - aws
+              - grafana
+              - describe-workspace
+              - --region
+              - "{{ grafana_region }}"
+              - --workspace-id
+              - "{{ amg_workspace_id }}"
+              - --query
+              - workspace.endpoint
+              - --output
+              - text
+          register: grafana_workspace_endpoint_result
+          changed_when: false
+
+        - name: Normalize Grafana workspace URL
+          ansible.builtin.set_fact:
+            grafana_url: >-
+              {{ grafana_workspace_endpoint_result.stdout if grafana_workspace_endpoint_result.stdout.startswith('https://') else 'https://' ~ grafana_workspace_endpoint_result.stdout }}
+
+        - name: Create short-lived Grafana service-account token
+          ansible.builtin.command:
+            argv:
+              - aws
+              - grafana
+              - create-workspace-service-account-token
+              - --region
+              - "{{ grafana_region }}"
+              - --workspace-id
+              - "{{ amg_workspace_id }}"
+              - --service-account-id
+              - "{{ amg_service_account_id }}"
+              - --name
+              - "grafana-datasource-{{ lookup('ansible.builtin.env', 'GITHUB_RUN_ID') }}-{{ lookup('ansible.builtin.env', 'GITHUB_RUN_ATTEMPT') }}"
+              - --seconds-to-live
+              - "600"
+              - --output
+              - json
+          register: grafana_token_create
+          changed_when: true
+          no_log: true
+
+        - name: Store temporary Grafana token details
+          ansible.builtin.set_fact:
+            grafana_token: "{{ (grafana_token_create.stdout | from_json).serviceAccountToken.key }}"
+            grafana_token_id: "{{ (grafana_token_create.stdout | from_json).serviceAccountToken.id }}"
+          no_log: true
+
+        - name: Read existing AMP data source
+          ansible.builtin.uri:
+            url: "{{ grafana_url | regex_replace('/+$', '') }}/api/datasources/uid/{{ datasource_uid }}"
+            method: GET
+            headers:
+              Authorization: "Bearer {{ grafana_token }}"
+            status_code: [200, 404]
+            return_content: true
+          register: existing_datasource
+          no_log: true
+
+        - name: Create AMP data source
+          ansible.builtin.uri:
+            url: "{{ grafana_url | regex_replace('/+$', '') }}/api/datasources"
+            method: POST
+            headers:
+              Authorization: "Bearer {{ grafana_token }}"
+              Content-Type: application/json
+            body_format: json
+            body:
+              uid: "{{ datasource_uid }}"
+              name: "{{ datasource_name }}"
+              type: grafana-amazonprometheus-datasource
+              access: proxy
+              url: "{{ datasource_url }}"
+              isDefault: true
+              jsonData:
+                httpMethod: POST
+                authType: default
+                defaultRegion: "{{ amp_region }}"
+            status_code: [200, 201]
+          when: existing_datasource.status == 404
+          no_log: true
+
+        - name: Update AMP data source
+          ansible.builtin.uri:
+            url: "{{ grafana_url | regex_replace('/+$', '') }}/api/datasources/uid/{{ datasource_uid }}"
+            method: PUT
+            headers:
+              Authorization: "Bearer {{ grafana_token }}"
+              Content-Type: application/json
+            body_format: json
+            body:
+              id: "{{ existing_datasource.json.id | int }}"
+              orgId: "{{ existing_datasource.json.orgId | int }}"
+              uid: "{{ datasource_uid }}"
+              name: "{{ datasource_name }}"
+              type: grafana-amazonprometheus-datasource
+              access: proxy
+              url: "{{ datasource_url }}"
+              isDefault: true
+              jsonData:
+                httpMethod: POST
+                authType: default
+                defaultRegion: "{{ amp_region }}"
+            status_code: [200]
+          when: existing_datasource.status == 200
+          no_log: true
+
+      always:
+        - name: Revoke temporary Grafana service-account token
+          ansible.builtin.command:
+            argv:
+              - aws
+              - grafana
+              - delete-workspace-service-account-token
+              - --region
+              - "{{ grafana_region }}"
+              - --workspace-id
+              - "{{ amg_workspace_id }}"
+              - --service-account-id
+              - "{{ amg_service_account_id }}"
+              - --token-id
+              - "{{ grafana_token_id }}"
+          when: grafana_token_id is defined
+          changed_when: true
+          no_log: true
