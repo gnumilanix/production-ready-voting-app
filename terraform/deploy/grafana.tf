@@ -82,6 +82,30 @@ resource "aws_grafana_workspace_service_account" "datasource_provisioner" {
   workspace_id = aws_grafana_workspace.main.id
 }
 
+resource "aws_iam_role_policy" "jump_server_grafana_administration" {
+  name = "${var.name}-jump-server-grafana-administration"
+  role = aws_iam_role.jump_server.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "GrafanaWorkspaceAdministration"
+        Effect = "Allow"
+        Action = [
+          "grafana:DescribeWorkspace",
+          "grafana:ListPermissions",
+          "grafana:UpdatePermissions",
+          "grafana:CreateWorkspaceServiceAccountToken",
+          "grafana:DeleteWorkspaceServiceAccountToken"
+        ]
+        Resource = aws_grafana_workspace.main.arn
+      }
+    ]
+  })
+}
+
+
 # The workspace is created in SERVICE_MANAGED mode, but IAM Identity Center
 # group-to-Grafana admin assignment is not reliable via Terraform when the AWS
 # managed application update path rejects the SSO mutation. Assign the group in
