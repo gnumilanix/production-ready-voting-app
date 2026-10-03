@@ -52,10 +52,13 @@
         "sso:ListInstances",
         "sso:DescribeInstance",
         "sso:DescribeRegisteredRegions",
+        "sso:ListDirectoryAssociations",
         "identitystore:DescribeGroup",
         "identitystore:CreateGroup",
         "identitystore:UpdateGroup",
-        "identitystore:DeleteGroup"
+        "identitystore:DeleteGroup",
+        "identitystore:ListUsers",
+        "identitystore:ListGroups"
       ],
       "Resource": "*"
     },

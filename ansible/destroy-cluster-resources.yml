@@ -81,7 +81,6 @@
               - windows
               - add
               - playground
-              - "0"
               - --kind
               - deny
               - --schedule
@@ -103,13 +102,13 @@
               - --core
               - app
               - delete
-              - "{{ item }}"
+              - "{{ item | regex_replace('^argocd/', '') }}"
               - --app-namespace
               - argocd
               - --cascade
               - --yes
               - --wait
-          loop: "{{ argocd_applications.stdout_lines | default([]) | reject('equalto', 'karpenter-controller') | list }}"
+          loop: "{{ argocd_applications.stdout_lines | default([]) | map('regex_replace', '^argocd/', '') | reject('equalto', 'karpenter-controller') | list }}"
           register: argocd_applications_delete
           changed_when: true
           async: 120

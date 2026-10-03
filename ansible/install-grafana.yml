@@ -24,6 +24,7 @@
           - json
       register: grafana_permissions_result
       changed_when: false
+      ignore_errors: true
 
     - name: Assign GrafanaAdmins as workspace administrators
       ansible.builtin.command:
@@ -45,6 +46,7 @@
         | selectattr('role', 'equalto', 'ADMIN')
         | list | length == 0
       changed_when: true
+      ignore_errors: true
 
     - name: Configure AMP data source with an ephemeral token
       block:
