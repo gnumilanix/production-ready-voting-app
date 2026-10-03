@@ -83,6 +83,7 @@
         "grafana:UpdatePermissions",
         "grafana:ListPermissions",
         "grafana:CreateWorkspaceServiceAccount",
+        "grafana:ListWorkspaceServiceAccounts",
         "grafana:DescribeWorkspaceServiceAccount",
         "grafana:DeleteWorkspaceServiceAccount",
         "grafana:CreateWorkspaceServiceAccountToken",
