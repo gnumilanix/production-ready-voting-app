@@ -92,8 +92,6 @@
                 httpMethod: POST
                 authType: default
                 sigAuth: true
-                sigAuthType: assumeRole
-                assumeRoleArn: "{{ grafana_role_arn }}"
                 defaultRegion: "{{ amp_region }}"
             status_code: [200, 201]
           when: existing_datasource.status == 404
@@ -120,8 +118,6 @@
                 httpMethod: POST
                 authType: default
                 sigAuth: true
-                sigAuthType: assumeRole
-                assumeRoleArn: "{{ grafana_role_arn }}"
                 defaultRegion: "{{ amp_region }}"
             status_code: [200]
           when: existing_datasource.status == 200
