@@ -56,6 +56,18 @@
     - name: Configure installer kubeconfig
       ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
 
+    - name: Wait for the Vault pod to be created
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - wait
+          - --namespace
+          - "{{ vault_namespace }}"
+          - --for=create
+          - --timeout=600s
+          - "pod/{{ vault_pod }}"
+      changed_when: false
+
     - name: Wait for the Vault pod to run
       ansible.builtin.command:
         argv:
