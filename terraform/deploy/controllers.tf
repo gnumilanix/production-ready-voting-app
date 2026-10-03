@@ -94,15 +94,12 @@ resource "aws_iam_role_policy_attachment" "karpenter_controller" {
 resource "aws_kms_key" "vault_unseal" {
   description             = "Vault auto-unseal key for ${var.name}."
   enable_key_rotation     = true
-  deletion_window_in_days = 30
+  deletion_window_in_days = 7
 
   tags = {
     Name = "${var.name}-vault-unseal"
   }
 
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_kms_alias" "vault_unseal" {
@@ -113,7 +110,7 @@ resource "aws_kms_alias" "vault_unseal" {
 resource "aws_secretsmanager_secret" "vault_initialization" {
   name                    = "${var.name}/vault/init"
   description             = "Vault initialization recovery material for ${var.name}."
-  recovery_window_in_days = 30
+  recovery_window_in_days = 0
 
   tags = {
     Name = "${var.name}-vault-initialization"

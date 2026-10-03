@@ -33,4 +33,10 @@ After `init.sh` has run, both roots are applied by workflows:
 
 Both workflows authenticate to AWS with OIDC — no stored credentials — and read the state bucket name and region from the GitHub repository variables `STATE_BUCKET_NAME` and `AWS_REGION`. The deploy workflow additionally requires the `JUMP_SERVER_SSH_CIDR` variable and the `JUMP_SERVER_PUBLIC_KEY` secret.
 
+## Destroying and reprovisioning the application infrastructure
+
+Run [`destroy-terraform-deploy`](../.github/workflows/terraform-destroy-workflow.yaml) manually from the Actions tab to destroy resources tracked by `deploy/`. Enter `DESTROY voting-app infrastructure` when prompted, review the destroy plan in the workflow logs, and approve the `production` environment deployment. The workflow preserves the bootstrap resources and remote state so the deploy workflow can provision the infrastructure again.
+
+AWS schedules KMS key deletion with a minimum seven-day waiting period. The Vault initialization secret is deleted immediately so its name is available on reprovision. Destroying deploy infrastructure does not remove resources created outside Terraform, such as manually created AWS Identity Center assignments or external DNS records.
+
 Keep local state files out of Git, and do not put credentials in backend configuration.
