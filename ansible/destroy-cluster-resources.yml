@@ -38,83 +38,102 @@
       ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
       when: eks_cluster_check.rc == 0
 
-    - name: Log in to Argo CD CLI in core mode
-      ansible.builtin.command:
-        argv: [argocd, login, --core]
-      register: argocd_core_login
-      changed_when: false
+    - name: Run Argo CD cleanup and reset kube context
       when: eks_cluster_check.rc == 0
+      block:
+        - name: Point current kube context at the argocd namespace
+          ansible.builtin.command:
+            argv:
+              - kubectl
+              - config
+              - set-context
+              - --current
+              - --namespace=argocd
+          changed_when: true
 
-    - name: List Argo CD applications
-      ansible.builtin.command:
-        argv:
-          - argocd
-          - --core
-          - app
-          - list
-          - --app-namespace
-          - argocd
-          - --output
-          - name
-      register: argocd_applications
-      changed_when: false
-      when: eks_cluster_check.rc == 0
+        - name: Log in to Argo CD CLI in core mode
+          ansible.builtin.command:
+            argv: [argocd, login, --core]
+          register: argocd_core_login
+          changed_when: false
 
-    - name: Disable Argo CD automated sync before cleanup
-      ansible.builtin.command:
-        argv:
-          - argocd
-          - --core
-          - app
-          - set
-          - "{{ item }}"
-          - --app-namespace
-          - argocd
-          - --sync-policy
-          - none
-      loop: "{{ argocd_applications.stdout_lines | default([]) }}"
-      register: argocd_sync_pause
-      changed_when: true
-      when: eks_cluster_check.rc == 0
+        - name: List Argo CD applications
+          ansible.builtin.command:
+            argv:
+              - argocd
+              - --core
+              - app
+              - list
+              - --app-namespace
+              - argocd
+              - --output
+              - name
+          register: argocd_applications
+          changed_when: false
 
-    - name: Cascade-delete the Karpenter controller application first
-      ansible.builtin.command:
-        argv:
-          - argocd
-          - --core
-          - app
-          - delete
-          - karpenter-controller
-          - --app-namespace
-          - argocd
-          - --cascade
-          - --yes
-          - --wait
-      register: karpenter_application_delete
-      changed_when: true
-      when: eks_cluster_check.rc == 0
-      async: 2700
-      poll: 15
+        - name: Disable Argo CD automated sync before cleanup
+          ansible.builtin.command:
+            argv:
+              - argocd
+              - --core
+              - app
+              - set
+              - "{{ item }}"
+              - --app-namespace
+              - argocd
+              - --sync-policy
+              - none
+          loop: "{{ argocd_applications.stdout_lines | default([]) }}"
+          register: argocd_sync_pause
+          changed_when: true
 
-    - name: Cascade-delete the remaining Argo CD applications
-      ansible.builtin.command:
-        argv:
-          - argocd
-          - --core
-          - app
-          - delete
-          - "{{ item }}"
-          - --app-namespace
-          - argocd
-          - --cascade
-          - --yes
-          - --wait
-      loop: "{{ argocd_applications.stdout_lines | default([]) | reject('equalto', 'karpenter-controller') | list }}"
-      register: argocd_applications_delete
-      changed_when: true
-      when: eks_cluster_check.rc == 0
-      async: 1800
-      poll: 15
+        - name: Cascade-delete the Karpenter controller application first
+          ansible.builtin.command:
+            argv:
+              - argocd
+              - --core
+              - app
+              - delete
+              - karpenter-controller
+              - --app-namespace
+              - argocd
+              - --cascade
+              - --yes
+              - --wait
+          register: karpenter_application_delete
+          changed_when: true
+          async: 2700
+          poll: 15
+
+        - name: Cascade-delete the remaining Argo CD applications
+          ansible.builtin.command:
+            argv:
+              - argocd
+              - --core
+              - app
+              - delete
+              - "{{ item }}"
+              - --app-namespace
+              - argocd
+              - --cascade
+              - --yes
+              - --wait
+          loop: "{{ argocd_applications.stdout_lines | default([]) | reject('equalto', 'karpenter-controller') | list }}"
+          register: argocd_applications_delete
+          changed_when: true
+          async: 1800
+          poll: 15
+      always:
+        - name: Reset kube context namespace to default
+          ansible.builtin.command:
+            argv:
+              - kubectl
+              - config
+              - set-context
+              - --current
+              - --namespace=default
+          changed_when: true
+          ignore_errors: true
 
     - name: Uninstall Argo CD and wait for its Ingress ALB cleanup
       ansible.builtin.command:
