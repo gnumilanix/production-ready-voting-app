@@ -112,6 +112,7 @@ jobs:
           path: terraform/deploy/
 
       - name: Cascade-delete Argo resources before Terraform teardown
+        if: ${{ needs.plan-destroy.outputs.jump_server_ip != '' }}
         uses: dawidd6/action-ansible-playbook@v9
         with:
           playbook: destroy-cluster-resources.yml

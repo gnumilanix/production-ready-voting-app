@@ -72,10 +72,6 @@
           changed_when: false
           ignore_errors: true
 
-        - name: Default to no applications when listing fails
-          ansible.builtin.set_fact:
-            argocd_applications: "{{ argocd_applications | default({'stdout_lines': []}) }}"
-
         - name: Disable Argo CD automated sync before cleanup
           ansible.builtin.command:
             argv:
