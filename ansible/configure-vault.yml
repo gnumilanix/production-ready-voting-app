@@ -88,7 +88,9 @@
       failed_when: false
       retries: 30
       delay: 10
-      until: vault_initial_status.rc == 0
+      until: >-
+        vault_initial_status.rc in [0, 2] and
+        (vault_initial_status.stdout | from_json).initialized is defined
 
     - name: Record whether Vault is initialized
       ansible.builtin.set_fact:
