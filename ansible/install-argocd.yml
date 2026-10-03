@@ -11,6 +11,9 @@
     AWS_REGION: "{{ eks_cluster_region }}"
     KUBECONFIG: "{{ installer_kubeconfig }}"
   tasks:
+    - name: Install Argo CD CLI
+      ansible.builtin.import_tasks: tasks/install-argocd-cli.yml
+
     - name: Configure installer kubeconfig
       ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
 

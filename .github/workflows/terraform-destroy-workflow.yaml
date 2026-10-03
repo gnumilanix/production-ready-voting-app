@@ -29,6 +29,10 @@ defaults:
 jobs:
   plan-destroy:
     runs-on: ubuntu-latest
+    outputs:
+      jump_server_ip: ${{ steps.export-outputs.outputs.jump_server_ip }}
+      eks_cluster_name: ${{ steps.export-outputs.outputs.eks_cluster_name }}
+      controller_installer_role_arn: ${{ steps.export-outputs.outputs.controller_installer_role_arn }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -61,6 +65,13 @@ jobs:
 
       - name: Create destroy plan
         run: terraform plan -destroy -out=tfplan
+
+      - name: Capture cluster cleanup connection details
+        id: export-outputs
+        run: |
+          echo "jump_server_ip=$(terraform output -raw jump_server_public_ip)" >> "$GITHUB_OUTPUT"
+          echo "eks_cluster_name=$(terraform output -raw eks_cluster_name)" >> "$GITHUB_OUTPUT"
+          echo "controller_installer_role_arn=$(terraform output -raw controller_installer_role_arn)" >> "$GITHUB_OUTPUT"
 
       - name: Upload destroy plan
         uses: actions/upload-artifact@v7
@@ -99,6 +110,21 @@ jobs:
         with:
           name: tfplan-destroy-deploy
           path: terraform/deploy/
+
+      - name: Cascade-delete Argo resources before Terraform teardown
+        uses: dawidd6/action-ansible-playbook@v9
+        with:
+          playbook: destroy-cluster-resources.yml
+          directory: ansible
+          key: ${{ secrets.JUMP_SERVER_PRIVATE_KEY }}
+          inventory: |
+            [jump_server]
+            ${{ needs.plan-destroy.outputs.jump_server_ip }} ansible_user=ec2-user
+
+            [jump_server:vars]
+            eks_cluster_name=${{ needs.plan-destroy.outputs.eks_cluster_name }}
+            eks_cluster_region=${{ vars.AWS_REGION }}
+            installer_role_arn=${{ needs.plan-destroy.outputs.controller_installer_role_arn }}
 
       - name: Apply destroy plan
         run: terraform apply -auto-approve tfplan

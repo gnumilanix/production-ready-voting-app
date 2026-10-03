@@ -1,0 +1,15 @@
+---
+- name: Download and verify the Argo CD CLI
+  ansible.builtin.get_url:
+    url: https://github.com/argoproj/argo-cd/releases/download/v3.5.3/argocd-linux-amd64
+    dest: /usr/local/bin/argocd
+    mode: "0755"
+    checksum: sha256:b860f73f57cbddd993cd446f5236d797c1b1ac8554857b2683d2669f17e765b4
+  become: true
+
+- name: Verify Argo CD CLI version
+  ansible.builtin.command:
+    argv: [argocd, version, --client, --short]
+  register: argocd_cli_version_output
+  changed_when: false
+  failed_when: "'v3.5.3' not in argocd_cli_version_output.stdout"

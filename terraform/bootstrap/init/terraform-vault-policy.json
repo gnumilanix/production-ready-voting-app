@@ -31,7 +31,10 @@
     {
       "Effect": "Allow",
       "Action": ["kms:DeleteAlias"],
-      "Resource": "arn:aws:kms:us-east-1:365020425296:alias/voting-app-vault-unseal"
+      "Resource": [
+        "arn:aws:kms:us-east-1:365020425296:alias/voting-app-vault-unseal",
+        "arn:aws:kms:us-east-1:365020425296:key/*"
+      ]
     },
     {
       "Effect": "Allow",

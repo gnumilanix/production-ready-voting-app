@@ -87,7 +87,9 @@
       ],
       "Resource": [
         "arn:aws:iam::365020425296:instance-profile/voting-app-jump-server-profile",
-        "arn:aws:iam::365020425296:instance-profile/voting-app-karpenter-node-instance-profile-role"
+        "arn:aws:iam::365020425296:instance-profile/voting-app-karpenter-node-instance-profile-role",
+        "arn:aws:iam::365020425296:instance-profile/voting-app_*",
+        "arn:aws:iam::365020425296:instance-profile/karpenter/us-east-1/voting-app/*/voting-app_*"
       ]
     },
     {

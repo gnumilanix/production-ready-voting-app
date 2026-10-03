@@ -1,0 +1,148 @@
+---
+- name: Remove Kubernetes-managed AWS resources before Terraform teardown
+  hosts: jump_server
+  gather_facts: false
+  vars:
+    installer_kubeconfig: /tmp/voting-app-destroy-kubeconfig
+  environment:
+    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
+    AWS_REGION: "{{ eks_cluster_region }}"
+    KUBECONFIG: "{{ installer_kubeconfig }}"
+  tasks:
+    - name: Check whether the EKS cluster still exists
+      ansible.builtin.command:
+        argv:
+          - aws
+          - eks
+          - describe-cluster
+          - --name
+          - "{{ eks_cluster_name }}"
+          - --region
+          - "{{ eks_cluster_region }}"
+      register: eks_cluster_check
+      changed_when: false
+      failed_when: >-
+        eks_cluster_check.rc != 0 and
+        'ResourceNotFoundException' not in eks_cluster_check.stderr
+
+    - name: Skip Kubernetes cleanup when EKS is already absent
+      ansible.builtin.debug:
+        msg: "EKS cluster {{ eks_cluster_name }} is already absent; continuing with Terraform cleanup."
+      when: eks_cluster_check.rc != 0
+
+    - name: Ensure Argo CD CLI is installed on the jump host
+      ansible.builtin.import_tasks: tasks/install-argocd-cli.yml
+      when: eks_cluster_check.rc == 0
+
+    - name: Configure installer kubeconfig
+      ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
+      when: eks_cluster_check.rc == 0
+
+    - name: Log in to Argo CD CLI in core mode
+      ansible.builtin.command:
+        argv: [argocd, login, --core]
+      register: argocd_core_login
+      changed_when: false
+      when: eks_cluster_check.rc == 0
+
+    - name: List Argo CD applications
+      ansible.builtin.command:
+        argv:
+          - argocd
+          - --core
+          - app
+          - list
+          - --app-namespace
+          - argocd
+          - --output
+          - name
+      register: argocd_applications
+      changed_when: false
+      when: eks_cluster_check.rc == 0
+
+    - name: Disable Argo CD automated sync before cleanup
+      ansible.builtin.command:
+        argv:
+          - argocd
+          - --core
+          - app
+          - set
+          - "{{ item }}"
+          - --app-namespace
+          - argocd
+          - --sync-policy
+          - none
+      loop: "{{ argocd_applications.stdout_lines | default([]) }}"
+      register: argocd_sync_pause
+      changed_when: true
+      when: eks_cluster_check.rc == 0
+
+    - name: Cascade-delete the Karpenter controller application first
+      ansible.builtin.command:
+        argv:
+          - argocd
+          - --core
+          - app
+          - delete
+          - karpenter-controller
+          - --app-namespace
+          - argocd
+          - --cascade
+          - --yes
+          - --wait
+      register: karpenter_application_delete
+      changed_when: true
+      when: eks_cluster_check.rc == 0
+      async: 2700
+      poll: 15
+
+    - name: Cascade-delete the remaining Argo CD applications
+      ansible.builtin.command:
+        argv:
+          - argocd
+          - --core
+          - app
+          - delete
+          - "{{ item }}"
+          - --app-namespace
+          - argocd
+          - --cascade
+          - --yes
+          - --wait
+      loop: "{{ argocd_applications.stdout_lines | default([]) | reject('equalto', 'karpenter-controller') | list }}"
+      register: argocd_applications_delete
+      changed_when: true
+      when: eks_cluster_check.rc == 0
+      async: 1800
+      poll: 15
+
+    - name: Uninstall Argo CD and wait for its Ingress ALB cleanup
+      ansible.builtin.command:
+        argv:
+          - helm
+          - uninstall
+          - argocd
+          - --namespace
+          - argocd
+          - --ignore-not-found=true
+          - --wait=true
+          - --timeout=10m
+      register: argocd_helm_uninstall
+      changed_when: "'uninstalled' in argocd_helm_uninstall.stdout"
+      when: eks_cluster_check.rc == 0
+
+    - name: Delete the shared Gateway and wait for its ALB cleanup
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - delete
+          - gateway
+          - voting-gateway
+          - --namespace
+          - voting
+          - --ignore-not-found=true
+          - --wait=true
+          - --timeout=20m
+      register: voting_gateway_delete
+      changed_when: "' deleted' in voting_gateway_delete.stdout"
+      when: eks_cluster_check.rc == 0
