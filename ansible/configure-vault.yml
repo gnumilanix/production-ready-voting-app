@@ -85,10 +85,10 @@
         argv: "{{ vault_cli_prefix + ['vault', 'status', '-format=json'] }}"
       register: vault_initial_status
       changed_when: false
-      failed_when: vault_initial_status.rc not in [0, 2]
-      retries: 5
-      delay: 5
-      until: vault_initial_status.rc in [0, 2]
+      failed_when: false
+      retries: 30
+      delay: 10
+      until: vault_initial_status.rc == 0
 
     - name: Record whether Vault is initialized
       ansible.builtin.set_fact:
