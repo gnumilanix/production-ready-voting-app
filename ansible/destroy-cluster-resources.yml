@@ -72,20 +72,27 @@
           changed_when: false
           ignore_errors: true
 
-        - name: Disable Argo CD automated sync before cleanup
+        - name: Block all Argo CD syncs with a deny sync window on the project
           ansible.builtin.command:
             argv:
               - argocd
               - --core
-              - app
-              - set
-              - "{{ item }}"
-              - --app-namespace
-              - argocd
-              - --sync-policy
-              - none
-          loop: "{{ argocd_applications.stdout_lines | default([]) }}"
-          register: argocd_sync_pause
+              - proj
+              - windows
+              - add
+              - playground
+              - "0"
+              - --kind
+              - deny
+              - --schedule
+              - "* * * * *"
+              - --duration
+              - 24h
+              - --applications
+              - "*"
+              - --namespaces
+              - "*"
+          register: argocd_sync_window
           changed_when: true
           ignore_errors: true
 
