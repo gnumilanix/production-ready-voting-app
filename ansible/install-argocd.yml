@@ -56,8 +56,23 @@
           - --create-namespace
           - --values
           - "{{ argocd_values_file }}"
+          - --wait
+          - --timeout
+          - 10m
       register: argocd_helm_install
       changed_when: "'has been installed' in argocd_helm_install.stdout or 'has been upgraded' in argocd_helm_install.stdout"
+
+    - name: Wait for the Argo CD configuration ConfigMap
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - wait
+          - --for=create
+          - --timeout=120s
+          - configmap/argocd-cm
+          - --namespace
+          - "{{ argocd_namespace }}"
+      changed_when: false
 
     - name: Apply the voting AppProject
       ansible.builtin.command:

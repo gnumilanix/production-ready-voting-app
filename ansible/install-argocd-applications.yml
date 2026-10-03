@@ -37,6 +37,18 @@
       register: image_updater_application
       changed_when: "' created' in image_updater_application.stdout or ' configured' in image_updater_application.stdout"
 
+    - name: Wait for the Argo CD Image Updater Application to sync
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - wait
+          - application/argocd-image-updater
+          - --namespace
+          - argocd
+          - --for=jsonpath={.status.sync.status}=Synced
+          - --timeout=300s
+      changed_when: false
+
     - name: Wait for the Argo CD Image Updater Application to become healthy
       ansible.builtin.command:
         argv:
@@ -47,6 +59,16 @@
           - argocd
           - --for=jsonpath={.status.health.status}=Healthy
           - --timeout=300s
+      changed_when: false
+
+    - name: Wait for the ImageUpdater custom resource definition to be created
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - wait
+          - --for=create
+          - --timeout=120s
+          - crd/imageupdaters.argocd-image-updater.argoproj.io
       changed_when: false
 
     - name: Wait for the ImageUpdater custom resource definition
