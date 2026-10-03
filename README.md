@@ -5,11 +5,11 @@
 This project deploys Docker's official voting app sample to AWS with production-oriented infrastructure and operations.
 
 It uses:
-- EKS
+- EKS (AddOns, Pod identity)
 - A jump server to manage EKS
-- Karpenter
+- Karpenter + Node groups
 - Argo CD, including Argo Rollouts and Image Updater
-- Vault (data stored on Amazon EFS)
+- Vault (data stored on Amazon EFS and unsealed with KMS)
 - Amazon Managed Service for Prometheus (AMP) and Amazon Managed Grafana (AMG)
 
 Terraform provisions the infrastructure, and Ansible configures the cluster. A `kube-prometheus-stack` agent (no in-cluster Grafana) scrapes cluster metrics and remote-writes them to AMP via EKS Pod Identity.
@@ -61,8 +61,8 @@ flowchart TD
 
 ### Project layout
 
-- **terraform/**: All infrastructure as code. `bootstrap/` provisions the Terraform state backend (S3, DynamoDB) and the IAM identity the pipeline runs as; `deploy/` provisions the application infrastructure (VPC, EKS, node groups, EFS, controllers, IAM).
-- **ansible/**: Cluster configuration playbooks run against the jump server after the infrastructure is up — installs Argo CD and its applications, and initializes/configures Vault.
+- **terraform/**: All infrastructure as code. `bootstrap/` provisions the Terraform state backend (S3 with native state locking) and the IAM identity the pipeline runs as; `deploy/` provisions the application infrastructure (VPC, EKS, node groups, EFS, controllers, IAM).
+- **ansible/**: After infrastructure is up, playbooks configure the cluster through the jump server and provision Grafana locally — installing Argo CD and its applications, initializing/configuring Vault, and setting up the AMP data source and dashboards.
 - **argo/**: Kubernetes manifests managed by Argo CD (GitOps) — the voting app, Vault, Karpenter, Rollouts, Image Updater, and shared Gateway API prerequisites.
 - **app/**: The voting app source and Dockerfiles — `vote` (Python web UI), `worker` (.NET vote processor), `result` (Node.js results UI), and `seed-data`.
 
@@ -87,7 +87,7 @@ Ansible generates the PostgreSQL password and writes it to Vault at `secret/post
 
 ### Workflows
 
-- **bootstrap-terraform** ([terraform-bootstrap-workflow.yaml](.github/workflows/terraform-bootstrap-workflow.yaml)): Runs on pushes/PRs to `main` that touch `terraform/bootstrap`, and provisions the foundational state backend (S3 bucket, DynamoDB locking) and IAM identity used by the deploy pipeline.
+- **bootstrap-terraform** ([terraform-bootstrap-workflow.yaml](.github/workflows/terraform-bootstrap-workflow.yaml)): Runs on pushes/PRs to `main` that touch `terraform/bootstrap`, and provisions the foundational state backend (S3 bucket with native state locking) and IAM identity used by the deploy pipeline.
 - **deploy-terraform** ([terraform-deploy-workflow.yaml](.github/workflows/terraform-deploy-workflow.yaml)): Triggered after a successful bootstrap run (or manually); validates, plans, applies the `terraform/deploy` infrastructure (VPC, EKS, node groups, EFS, controllers), then configures the cluster with Ansible (Argo CD, Vault, app bootstrap).
 - **build-app-images** ([build-app-images.yaml](.github/workflows/build-app-images.yaml)): Runs when files under `app/` change; builds the changed component images (vote, result, worker, seed-data) and pushes them to GHCR with `main-latest` and commit-SHA tags for Argo Image Updater to roll out.
 

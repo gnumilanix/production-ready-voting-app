@@ -3,23 +3,9 @@
 A simple distributed application running across multiple Docker containers.
 
 
-## Run the app in Kubernetes
+## Kubernetes deployment
 
-The folder k8s-specifications contains the YAML specifications of the Voting App's services.
-
-Run the following command to create the deployments and services. Note it will create these resources in your current namespace (`default` if you haven't changed it.)
-
-```shell
-kubectl create -f k8s-specifications/
-```
-
-The `vote` web app is then available on port 31000 on each host of the cluster, the `result` web app is available on port 31001.
-
-To remove them, run:
-
-```shell
-kubectl delete -f k8s-specifications/
-```
+In this repository, Argo CD deploys the voting app from [`argo/voting/`](../argo/voting/). Manage the app through its Argo CD application rather than applying standalone `k8s-specifications/` manifests.
 
 ## Architecture
 

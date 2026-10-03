@@ -11,7 +11,7 @@ Both roots require Terraform 1.10 or newer for S3 native state locking (`use_loc
 
 Before the deploy workflow can succeed, enable an IAM Identity Center organization instance in the AWS Organizations management account using the AWS console. Enable it in the same region as the Grafana workspace (`us-east-1`); Terraform reads the instance but does not create it.
 
-Terraform creates the Identity Center group `GrafanaAdmins` and grants it Grafana administrator access. Add or remove group members in the AWS console; membership changes do not require Terraform changes.
+Terraform creates the Identity Center group `GrafanaAdmins`. Assign the group Grafana administrator access in the AWS or Grafana console; manage group membership in the AWS console. These changes do not require Terraform changes.
 
 The bootstrap script `bootstrap/init/init.sh` is also a one-time manual step. It creates the GitHub Actions OIDC provider, the IAM user and role (`GitHubActionsTerraformRole`) with the policies the workflows assume, and the state bucket itself.
 
