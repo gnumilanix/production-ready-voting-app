@@ -8,6 +8,7 @@
     datasource_uid: amazon-managed-prometheus
     datasource_name: Amazon-Managed-Prometheus
     datasource_url: "https://aps-workspaces.{{ amp_region }}.amazonaws.com/workspaces/{{ amp_workspace_id }}"
+    grafana_role_arn: "{{ grafana_role_arn | default('') }}"
   tasks:
     - name: Configure AMP data source with an ephemeral token
       block:
@@ -83,13 +84,16 @@
             body:
               uid: "{{ datasource_uid }}"
               name: "{{ datasource_name }}"
-              type: grafana-amazonprometheus-datasource
+              type: prometheus
               access: proxy
               url: "{{ datasource_url }}"
               isDefault: true
               jsonData:
                 httpMethod: POST
                 authType: default
+                sigAuth: true
+                sigAuthType: assumeRole
+                assumeRoleArn: "{{ grafana_role_arn }}"
                 defaultRegion: "{{ amp_region }}"
             status_code: [200, 201]
           when: existing_datasource.status == 404
@@ -108,13 +112,16 @@
               orgId: "{{ existing_datasource.json.orgId | int }}"
               uid: "{{ datasource_uid }}"
               name: "{{ datasource_name }}"
-              type: grafana-amazonprometheus-datasource
+              type: prometheus
               access: proxy
               url: "{{ datasource_url }}"
               isDefault: true
               jsonData:
                 httpMethod: POST
                 authType: default
+                sigAuth: true
+                sigAuthType: assumeRole
+                assumeRoleArn: "{{ grafana_role_arn }}"
                 defaultRegion: "{{ amp_region }}"
             status_code: [200]
           when: existing_datasource.status == 200

@@ -123,6 +123,11 @@ output "amg_service_account_id" {
   description = "Service account ID used to provision Grafana resources"
 }
 
+output "grafana_workspace_role_arn" {
+  value       = aws_iam_role.grafana_workspace.arn
+  description = "IAM role ARN used by the Grafana workspace to query AMP data"
+}
+
 output "amp_workspace_id" {
   value       = aws_prometheus_workspace.main.id
   description = "The Amazon Managed Prometheus Workspace ID"
