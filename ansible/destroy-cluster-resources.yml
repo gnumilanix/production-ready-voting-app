@@ -70,6 +70,7 @@
               - name
           register: argocd_applications
           changed_when: false
+          ignore_errors: true
 
         - name: Disable Argo CD automated sync before cleanup
           ansible.builtin.command:
