@@ -86,6 +86,7 @@
           loop: "{{ argocd_applications.stdout_lines | default([]) }}"
           register: argocd_sync_pause
           changed_when: true
+          ignore_errors: true
 
         - name: Cascade-delete the Karpenter controller application first
           ansible.builtin.command:
@@ -104,6 +105,7 @@
           changed_when: true
           async: 2700
           poll: 15
+          ignore_errors: true
 
         - name: Cascade-delete the remaining Argo CD applications
           ansible.builtin.command:
@@ -123,6 +125,7 @@
           changed_when: true
           async: 1800
           poll: 15
+          ignore_errors: true
       always:
         - name: Reset kube context namespace to default
           ansible.builtin.command:
