@@ -72,6 +72,10 @@
           changed_when: false
           ignore_errors: true
 
+        - name: Default to no applications when listing fails
+          ansible.builtin.set_fact:
+            argocd_applications: "{{ argocd_applications | default({'stdout_lines': []}) }}"
+
         - name: Disable Argo CD automated sync before cleanup
           ansible.builtin.command:
             argv:
@@ -87,25 +91,6 @@
           loop: "{{ argocd_applications.stdout_lines | default([]) }}"
           register: argocd_sync_pause
           changed_when: true
-          ignore_errors: true
-
-        - name: Cascade-delete the Karpenter controller application first
-          ansible.builtin.command:
-            argv:
-              - argocd
-              - --core
-              - app
-              - delete
-              - karpenter-controller
-              - --app-namespace
-              - argocd
-              - --cascade
-              - --yes
-              - --wait
-          register: karpenter_application_delete
-          changed_when: true
-          async: 120
-          poll: 15
           ignore_errors: true
 
         - name: Cascade-delete the remaining Argo CD applications
@@ -152,6 +137,47 @@
           - --timeout=10m
       register: argocd_helm_uninstall
       changed_when: "'uninstalled' in argocd_helm_uninstall.stdout"
+      when: eks_cluster_check.rc == 0
+
+    - name: Delete the Karpenter NodePool to stop new Karpenter capacity
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - delete
+          - nodepool.karpenter.sh
+          - voting-app-nodepool
+          - --ignore-not-found=true
+          - --wait=true
+          - --timeout=5m
+      register: karpenter_nodepool_delete
+      changed_when: "' deleted' in karpenter_nodepool_delete.stdout"
+      when: eks_cluster_check.rc == 0
+
+    - name: Delete Karpenter NodeClaims and wait for instance termination
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - delete
+          - nodeclaims.karpenter.sh
+          - --all
+          - --wait=true
+          - --timeout=30m
+      register: karpenter_nodeclaims_delete
+      changed_when: "' deleted' in karpenter_nodeclaims_delete.stdout"
+      when: eks_cluster_check.rc == 0
+
+    - name: Delete the Karpenter EC2NodeClass and generated instance profiles
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - delete
+          - ec2nodeclass.karpenter.k8s.aws
+          - voting-app-nodeclass
+          - --ignore-not-found=true
+          - --wait=true
+          - --timeout=5m
+      register: karpenter_nodeclass_delete
+      changed_when: "' deleted' in karpenter_nodeclass_delete.stdout"
       when: eks_cluster_check.rc == 0
 
     - name: Delete the shared Gateway and wait for its ALB cleanup
