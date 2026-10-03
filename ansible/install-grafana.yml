@@ -90,9 +90,9 @@
               isDefault: true
               jsonData:
                 httpMethod: POST
-                authType: default
-                sigAuth: true
-                defaultRegion: "{{ amp_region }}"
+                sigV4Auth: true
+                sigV4AuthType: ec2_iam_role
+                sigV4Region: "{{ amp_region }}"
             status_code: [200, 201]
           when: existing_datasource.status == 404
           no_log: true
@@ -116,12 +116,34 @@
               isDefault: true
               jsonData:
                 httpMethod: POST
-                authType: default
-                sigAuth: true
-                defaultRegion: "{{ amp_region }}"
+                sigV4Auth: true
+                sigV4AuthType: ec2_iam_role
+                sigV4Region: "{{ amp_region }}"
             status_code: [200]
           when: existing_datasource.status == 200
           no_log: true
+
+        - name: Import Grafana dashboards
+          ansible.builtin.uri:
+            url: "{{ grafana_url | regex_replace('/+$', '') }}/api/dashboards/db"
+            method: POST
+            headers:
+              Authorization: "Bearer {{ grafana_token }}"
+              Content-Type: application/json
+            body_format: json
+            body:
+              dashboard: "{{ lookup('ansible.builtin.file', playbook_dir ~ '/grafana/dashboard/' ~ item) | from_json }}"
+              folderId: 0
+              overwrite: true
+            status_code: [200]
+          changed_when: true
+          no_log: true
+          loop:
+            - kubernetes-views-pods.json
+            - kubernetes-views-nodes.json
+            - kubernetes-views-namespaces.json
+            - kubernetes-views-global.json
+            - node-exporter-full.json
 
       always:
         - name: Revoke temporary Grafana service-account token
