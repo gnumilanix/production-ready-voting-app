@@ -50,6 +50,17 @@ spec:
                 region     = "us-east-1"
                 kms_key_id = "alias/voting-app-vault-unseal"
               }
+                tls_disable = 1
+                address = "[::]:8200"
+                cluster_address = "[::]:8201"
+              }
+              storage "file" {
+                path = "/vault/data"
+              }
+              seal "awskms" {
+                region     = "us-east-1"
+                kms_key_id = "alias/voting-app-vault-unseal"
+              }
   destination:
     server: https://kubernetes.default.svc
     namespace: vault

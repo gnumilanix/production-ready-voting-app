@@ -14,7 +14,13 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /
+            value: /vault
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
       backendRefs:
         - name: vault
           port: 8200

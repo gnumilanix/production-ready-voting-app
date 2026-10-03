@@ -14,14 +14,20 @@ controller:
 server:
   extraArgs:
     - --insecure
+  config:
+    server.rootpath: /argocd
+    server.basehref: /argocd/
 
-  ingress:
+  httproute:
     enabled: true
-    ingressClassName: alb
-    annotations:
-      alb.ingress.kubernetes.io/target-type: ip
-      alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/backend-protocol: HTTP
-      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
-  
-    hosts: ["*"]
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: voting-gateway
+        namespace: voting
+        sectionName: http
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /argocd
