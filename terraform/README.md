@@ -11,7 +11,9 @@ Both roots require Terraform 1.10 or newer for S3 native state locking (`use_loc
 
 Before the deploy workflow can succeed, enable an IAM Identity Center organization instance in the AWS Organizations management account using the AWS console. Enable it in the same region as the Grafana workspace (`us-east-1`); Terraform reads the instance but does not create it.
 
-Terraform creates the Identity Center group `GrafanaAdmins`. Assign the group Grafana administrator access in the AWS or Grafana console; manage group membership in the AWS console. These changes do not require Terraform changes.
+Terraform creates the Identity Center group `GrafanaAdmins`. Manage group membership in the AWS console; no Terraform changes are needed.
+
+Workspace role assignments do not survive reprovisioning: a recreated AMG workspace starts with no permissions, and group members get `sso.auth.access-denied` until the group is assigned again. The deploy workflow handles this automatically — the `install-grafana.yml` playbook assigns the `GrafanaAdmins` group `ADMIN` on the workspace after each deploy (idempotently, via `aws grafana update-permissions`). If you configure Grafana outside the workflow, the same assignment can be made manually in the AWS console or with that CLI call.
 
 The bootstrap script `bootstrap/init/init.sh` is also a one-time manual step. It creates the GitHub Actions OIDC provider, the IAM user and role (`GitHubActionsTerraformRole`) with the policies the workflows assume, and the state bucket itself.
 

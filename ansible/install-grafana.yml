@@ -10,6 +10,42 @@
     datasource_url: "https://aps-workspaces.{{ amp_region }}.amazonaws.com/workspaces/{{ amp_workspace_id }}"
     grafana_role_arn: ""
   tasks:
+    - name: Read existing Grafana workspace permissions
+      ansible.builtin.command:
+        argv:
+          - aws
+          - grafana
+          - list-permissions
+          - --region
+          - "{{ grafana_region }}"
+          - --workspace-id
+          - "{{ amg_workspace_id }}"
+          - --output
+          - json
+      register: grafana_permissions_result
+      changed_when: false
+
+    - name: Assign GrafanaAdmins as workspace administrators
+      ansible.builtin.command:
+        argv:
+          - aws
+          - grafana
+          - update-permissions
+          - --region
+          - "{{ grafana_region }}"
+          - --workspace-id
+          - "{{ amg_workspace_id }}"
+          - --update-instruction-batch
+          - >-
+            [{"action": "ADD", "role": "ADMIN", "users": [{"id": "{{ grafana_admins_group_id }}", "type": "SSO_GROUP"}]}]
+      when: >-
+        (grafana_permissions_result.stdout | from_json).permissions
+        | selectattr('user.type', 'equalto', 'SSO_GROUP')
+        | selectattr('user.id', 'equalto', grafana_admins_group_id)
+        | selectattr('role', 'equalto', 'ADMIN')
+        | list | length == 0
+      changed_when: true
+
     - name: Configure AMP data source with an ephemeral token
       block:
         - name: Read Grafana workspace endpoint

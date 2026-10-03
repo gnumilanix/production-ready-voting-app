@@ -67,7 +67,7 @@ flowchart TD
 - **app/**: The voting app source and Dockerfiles — `vote` (Python web UI), `worker` (.NET vote processor), `result` (Node.js results UI), and `seed-data`.
 
 ### Prerequisite
-Enable an IAM Identity Center organization instance in the same region as the Grafana workspace (`us-east-1`). Terraform creates the `GrafanaAdmins` group, but Grafana admin assignment is managed manually in the AWS or Grafana console because the AWS managed application update path for `SERVICE_MANAGED` workspace permissions is rejected in this environment.
+Enable an IAM Identity Center organization instance in the same region as the Grafana workspace (`us-east-1`). Terraform creates the `GrafanaAdmins` group, and the deploy workflow assigns it `ADMIN` on the Grafana workspace after each deploy (workspace permissions do not survive reprovisioning; see [terraform/README.md](terraform/README.md)). Group membership is managed manually in the AWS console.
 
 Configure the following GitHub Actions secrets and variables:
 

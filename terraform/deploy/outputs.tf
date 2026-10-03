@@ -123,6 +123,11 @@ output "amg_service_account_id" {
   description = "Service account ID used to provision Grafana resources"
 }
 
+output "grafana_admins_group_id" {
+  description = "Identity Center group ID for GrafanaAdmins."
+  value       = aws_identitystore_group.grafana_admins.group_id
+}
+
 output "grafana_workspace_role_arn" {
   value       = aws_iam_role.grafana_workspace.arn
   description = "IAM role ARN used by the Grafana workspace to query AMP data"

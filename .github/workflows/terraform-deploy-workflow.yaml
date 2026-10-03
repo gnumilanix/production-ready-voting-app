@@ -93,6 +93,7 @@ jobs:
             amg_workspace_id: ${{ steps.export-tf-outputs.outputs.AMG_WORKSPACE_ID }}
             amg_service_account_id: ${{ steps.export-tf-outputs.outputs.AMG_SERVICE_ACCOUNT_ID }}
             grafana_workspace_role_arn: ${{ steps.export-tf-outputs.outputs.GRAFANA_WORKSPACE_ROLE_ARN }}
+            grafana_admins_group_id: ${{ steps.export-tf-outputs.outputs.GRAFANA_ADMINS_GROUP_ID }}
             amp_workspace_id: ${{ steps.export-tf-outputs.outputs.AMP_WORKSPACE_ID }}
             amp_region: ${{ steps.export-tf-outputs.outputs.AMP_REGION }}
         steps:
@@ -139,6 +140,7 @@ jobs:
                 echo "AMG_WORKSPACE_ID=$(terraform output -raw amg_workspace_id)" >> "$GITHUB_OUTPUT"
                 echo "AMG_SERVICE_ACCOUNT_ID=$(terraform output -raw amg_service_account_id)" >> "$GITHUB_OUTPUT"
                 echo "GRAFANA_WORKSPACE_ROLE_ARN=$(terraform output -raw grafana_workspace_role_arn)" >> "$GITHUB_OUTPUT"
+                echo "GRAFANA_ADMINS_GROUP_ID=$(terraform output -raw grafana_admins_group_id)" >> "$GITHUB_OUTPUT"
                 echo "AMP_WORKSPACE_ID=$(terraform output -raw amp_workspace_id)" >> "$GITHUB_OUTPUT"
                 echo "AMP_REGION=$(terraform output -raw amp_region)" >> "$GITHUB_OUTPUT"
 
@@ -184,4 +186,4 @@ jobs:
                   directory: ansible
                   inventory: |
                       [local]
-                      localhost ansible_connection=local amg_workspace_id=${{ needs.deploy.outputs.amg_workspace_id }} amg_service_account_id=${{ needs.deploy.outputs.amg_service_account_id }} grafana_role_arn=${{ needs.deploy.outputs.grafana_workspace_role_arn }} amp_workspace_id=${{ needs.deploy.outputs.amp_workspace_id }} amp_region=${{ needs.deploy.outputs.amp_region }}
+                      localhost ansible_connection=local amg_workspace_id=${{ needs.deploy.outputs.amg_workspace_id }} amg_service_account_id=${{ needs.deploy.outputs.amg_service_account_id }} grafana_role_arn=${{ needs.deploy.outputs.grafana_workspace_role_arn }} grafana_admins_group_id=${{ needs.deploy.outputs.grafana_admins_group_id }} amp_workspace_id=${{ needs.deploy.outputs.amp_workspace_id }} amp_region=${{ needs.deploy.outputs.amp_region }}
