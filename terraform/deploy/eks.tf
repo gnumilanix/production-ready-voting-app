@@ -118,19 +118,6 @@ resource "aws_eks_access_entry" "karpenter_node" {
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = aws_iam_role.ec2_node["karpenter_node"].arn
   type          = "EC2_LINUX"
-  user_name     = "system:node:{{EC2PrivateDNSName}}"
-}
-
-resource "aws_eks_access_policy_association" "karpenter_node_policy" {
-  cluster_name  = aws_eks_cluster.main.name
-  principal_arn = aws_eks_access_entry.karpenter_node.principal_arn
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSWorkerNodePolicy"
-
-  depends_on = [aws_eks_access_entry.karpenter_node]
-
-  access_scope {
-    type = "cluster"
-  }
 }
 
 resource "aws_eks_access_policy_association" "console_user_admin_view" {

@@ -19,7 +19,6 @@ spec:
         values: |
           settings:
             clusterName: "voting-app"
-            clusterEndpoint: "https://44E356C670181C3BFDC95124C49A2C96.gr7.us-east-1.eks.amazonaws.com"
             featureGates:
               spotToSpotConsolidation: true
           serviceAccount:
