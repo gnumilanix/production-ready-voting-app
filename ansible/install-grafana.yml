@@ -8,7 +8,7 @@
     datasource_uid: amazon-managed-prometheus
     datasource_name: Amazon-Managed-Prometheus
     datasource_url: "https://aps-workspaces.{{ amp_region }}.amazonaws.com/workspaces/{{ amp_workspace_id }}"
-    grafana_role_arn: "{{ grafana_role_arn | default('') }}"
+    grafana_role_arn: ""
   tasks:
     - name: Configure AMP data source with an ephemeral token
       block:
