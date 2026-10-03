@@ -21,7 +21,7 @@ env:
   TF_VAR_state_bucket_name: ${{ vars.STATE_BUCKET_NAME }}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: voting-app-terraform-deploy
   cancel-in-progress: false
 
 jobs:

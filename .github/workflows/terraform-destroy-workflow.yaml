@@ -19,7 +19,7 @@ env:
   TF_VAR_jump_server_public_key: ${{ secrets.JUMP_SERVER_PUBLIC_KEY }}
 
 concurrency:
-  group: deploy-terraform-${{ github.ref }}
+  group: voting-app-terraform-deploy
   cancel-in-progress: false
 
 defaults:
