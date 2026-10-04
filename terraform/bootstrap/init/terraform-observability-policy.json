@@ -72,6 +72,14 @@
     {
       "Effect": "Allow",
       "Action": [
+        "sso:CreateManagedApplicationInstance",
+        "sso:DeleteManagedApplicationInstance"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "grafana:CreateWorkspace",
         "grafana:DescribeWorkspace",
         "grafana:DescribeWorkspaceConfiguration",
