@@ -63,7 +63,9 @@
         "sso:Get*",
         "sso:List*",
         "sso:Describe*",
-        "sso:Search*"
+        "sso:Search*",
+        "sso:AssociateProfile",
+				"sso:DisassociateProfile"
       ],
       "Resource": "*"
     },
