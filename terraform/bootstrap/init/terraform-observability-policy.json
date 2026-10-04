@@ -48,9 +48,6 @@
     {
       "Effect": "Allow",
       "Action": [
-        "sso:ListInstances",
-        "sso:DescribeInstance",
-        "sso:DescribeRegisteredRegions",
         "identitystore:DescribeGroup",
         "identitystore:CreateGroup",
         "identitystore:UpdateGroup",
@@ -63,8 +60,10 @@
     {
       "Effect": "Allow",
       "Action": [
-        "sso:CreateManagedApplicationInstance",
-        "sso:DeleteManagedApplicationInstance"
+        "sso:Get*",
+        "sso:List*",
+        "sso:Describe*",
+        "sso:Search*"
       ],
       "Resource": "*"
     },
