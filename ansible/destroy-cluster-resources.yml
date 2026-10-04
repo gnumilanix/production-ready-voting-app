@@ -111,7 +111,7 @@
           loop: "{{ argocd_applications.stdout_lines | default([]) | map('regex_replace', '^argocd/', '') | reject('equalto', 'karpenter-controller') | list }}"
           register: argocd_applications_delete
           changed_when: true
-          async: 120
+          async: 900
           poll: 15
           ignore_errors: true
       always:
