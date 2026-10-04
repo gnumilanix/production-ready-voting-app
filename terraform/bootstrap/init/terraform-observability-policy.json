@@ -27,7 +27,10 @@
         "aps:CreateWorkspace",
         "aps:TagResource"
       ],
-      "Resource": "arn:aws:aps:us-east-1:365020425296:workspace/*"
+      "Resource": [
+        "arn:aws:aps:us-east-1:365020425296:/workspaces",
+        "arn:aws:aps:us-east-1:365020425296:workspace/*"
+      ]
     },
     {
       "Effect": "Allow",
