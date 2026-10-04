@@ -14,9 +14,6 @@ controller:
 server:
   extraArgs:
     - --insecure
-  config:
-    server.rootpath: /argocd
-    server.basehref: /argocd/
 
   httproute:
     enabled: true
@@ -25,9 +22,4 @@ server:
         kind: Gateway
         name: voting-gateway
         namespace: voting
-        sectionName: http
-    rules:
-      - matches:
-          - path:
-              type: PathPrefix
-              value: /argocd
+        sectionName: argocd-ui

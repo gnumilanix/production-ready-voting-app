@@ -45,3 +45,12 @@ spec:
           selector:
             matchLabels:
               kubernetes.io/metadata.name: argo-rollouts
+    - name: argocd-ui
+      protocol: HTTP
+      port: 8080
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: argocd
