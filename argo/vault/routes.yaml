@@ -11,16 +11,6 @@ spec:
       namespace: voting
       sectionName: vault-ui
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /vault
-      filters:
-        - type: URLRewrite
-          urlRewrite:
-            path:
-              type: ReplacePrefixMatch
-              replacePrefixMatch: /
-      backendRefs:
+    - backendRefs:
         - name: vault
           port: 8200
