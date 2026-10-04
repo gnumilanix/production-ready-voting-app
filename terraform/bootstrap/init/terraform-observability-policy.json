@@ -7,7 +7,6 @@
         "sts:GetCallerIdentity",
         "ec2:Describe*",
         "eks:Describe*",
-        "eks:Get*",
         "eks:List*",
         "iam:Get*",
         "iam:List*"
@@ -28,7 +27,7 @@
         "aps:CreateWorkspace",
         "aps:TagResource"
       ],
-      "Resource": "arn:aws:aps:us-east-1:365020425296:/workspaces"
+      "Resource": "arn:aws:aps:us-east-1:365020425296:workspace/*"
     },
     {
       "Effect": "Allow",
@@ -52,7 +51,6 @@
         "sso:ListInstances",
         "sso:DescribeInstance",
         "sso:DescribeRegisteredRegions",
-        "sso:ListDirectoryAssociations",
         "identitystore:DescribeGroup",
         "identitystore:CreateGroup",
         "identitystore:UpdateGroup",
@@ -81,16 +79,12 @@
         "grafana:ListTagsForResource",
         "grafana:TagResource",
         "grafana:UntagResource",
-        "grafana:AssociateRole",
-        "grafana:DisassociateRole",
         "grafana:UpdatePermissions",
         "grafana:ListPermissions",
         "grafana:CreateWorkspaceServiceAccount",
         "grafana:ListWorkspaceServiceAccounts",
-        "grafana:DescribeWorkspaceServiceAccount",
         "grafana:DeleteWorkspaceServiceAccount",
         "grafana:CreateWorkspaceServiceAccountToken",
-        "grafana:DescribeWorkspaceServiceAccountToken",
         "grafana:DeleteWorkspaceServiceAccountToken"
       ],
       "Resource": "*"
