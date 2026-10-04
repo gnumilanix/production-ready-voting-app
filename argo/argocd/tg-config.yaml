@@ -1,0 +1,12 @@
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: argocd-tg-config
+  namespace: argocd
+spec:
+  targetReference:
+    group: ""
+    kind: Service
+    name: argocd-server
+  defaultConfiguration:
+    targetType: ip

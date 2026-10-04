@@ -74,6 +74,28 @@
           - "{{ argocd_namespace }}"
       changed_when: false
 
+    - name: Apply the Argo CD TargetGroupConfiguration
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - "-"
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/argocd/tg-config.yaml') }}"
+      register: argocd_tg_config
+      changed_when: "' created' in argocd_tg_config.stdout or ' configured' in argocd_tg_config.stdout"
+
+    - name: Apply the Argo CD ReferenceGrant
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - apply
+          - -f
+          - "-"
+        stdin: "{{ lookup('file', playbook_dir ~ '/../argo/argocd/reference-grant.yaml') }}"
+      register: argocd_reference_grant
+      changed_when: "' created' in argocd_reference_grant.stdout or ' configured' in argocd_reference_grant.stdout"
+
     - name: Apply the voting AppProject
       ansible.builtin.command:
         argv:
