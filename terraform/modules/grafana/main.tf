@@ -7,7 +7,6 @@ data "aws_ssoadmin_instances" "main" {
 
 locals {
   identity_store_id = tolist(data.aws_ssoadmin_instances.main.identity_store_ids)[0]
-  sso_instance_arn  = tolist(data.aws_ssoadmin_instances.main.arns)[0]
 }
 
 resource "aws_identitystore_group" "grafana_admins" {
@@ -51,7 +50,7 @@ resource "aws_iam_role_policy" "grafana_amp_query" {
         "aps:GetSeries",
         "aps:GetMetricMetadata"
       ]
-      Resource = aws_prometheus_workspace.main.arn
+      Resource = var.amp_workspace_arn
     }]
   })
 }
@@ -81,30 +80,6 @@ resource "aws_grafana_workspace_service_account" "datasource_provisioner" {
   grafana_role = "ADMIN"
   workspace_id = aws_grafana_workspace.main.id
 }
-
-resource "aws_iam_role_policy" "jump_server_grafana_administration" {
-  name = "${var.name}-jump-server-grafana-administration"
-  role = aws_iam_role.jump_server.name
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "GrafanaWorkspaceAdministration"
-        Effect = "Allow"
-        Action = [
-          "grafana:DescribeWorkspace",
-          "grafana:ListPermissions",
-          "grafana:UpdatePermissions",
-          "grafana:CreateWorkspaceServiceAccountToken",
-          "grafana:DeleteWorkspaceServiceAccountToken"
-        ]
-        Resource = aws_grafana_workspace.main.arn
-      }
-    ]
-  })
-}
-
 
 # The workspace is created in SERVICE_MANAGED mode, but IAM Identity Center
 # group-to-Grafana admin assignment is not reliable via Terraform when the AWS

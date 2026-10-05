@@ -11,7 +11,7 @@ resource "aws_iam_role" "pod_identity" {
 }
 
 resource "aws_iam_role" "ec2_node" {
-  for_each = local.ec2_role_names
+  for_each = local.ec2_node_role_names
 
   name = each.value
   assume_role_policy = jsonencode({
@@ -38,22 +38,6 @@ resource "aws_iam_role_policy_attachment" "eks_node" {
   policy_arn = each.value
 }
 
-resource "aws_iam_role_policy_attachment" "karpenter_node" {
-  for_each = local.eks_node_policy_arns
-
-  role       = aws_iam_role.ec2_node["karpenter_node"].name
-  policy_arn = each.value
-}
-
-resource "aws_iam_instance_profile" "karpenter_node" {
-  name = local.ec2_role_names["karpenter_node_instance_profile"]
-  role = aws_iam_role.ec2_node["karpenter_node"].name
-
-  tags = {
-    Name = local.ec2_role_names["karpenter_node_instance_profile"]
-  }
-}
-
 resource "aws_iam_role" "controller_installer" {
   name = "${var.name}-controller-installer-role"
 
@@ -62,7 +46,7 @@ resource "aws_iam_role" "controller_installer" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        AWS = aws_iam_role.jump_server.arn
+        AWS = var.jump_server_role_arn
       }
       Action = "sts:AssumeRole"
     }]

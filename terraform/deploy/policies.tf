@@ -1,70 +1,12 @@
-data "aws_ssm_parameter" "amazon_linux_2023" {
-  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
-}
-
-resource "aws_iam_role" "jump_server" {
-  name = "voting-app-jump-server-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
-    }]
-  })
-
-  tags = {
-    Name = "${var.name}-jump-server-role"
-  }
-}
-
-resource "aws_iam_instance_profile" "jump_server" {
-  name = "voting-app-jump-server-profile"
-  role = aws_iam_role.jump_server.name
-
-  tags = {
-    Name = "${var.name}-jump-server-profile"
-  }
-}
-
-resource "aws_key_pair" "jump_server" {
-  key_name   = "${var.name}-jump-server"
-  public_key = var.jump_server_public_key
-
-  tags = {
-    Name = "${var.name}-jump-server"
-  }
-}
-
-resource "aws_instance" "jump_server" {
-  ami                         = data.aws_ssm_parameter.amazon_linux_2023.value
-  instance_type               = "t3.micro"
-  subnet_id                   = aws_subnet.public["0"].id
-  vpc_security_group_ids      = [aws_security_group.jump_server.id]
-  key_name                    = aws_key_pair.jump_server.key_name
-  iam_instance_profile        = aws_iam_instance_profile.jump_server.name
-  associate_public_ip_address = true
-
-  metadata_options {
-    http_tokens = "required"
-  }
-
-  root_block_device {
-    encrypted   = true
-    volume_type = "gp3"
-  }
-
-  tags = {
-    Name = "${var.name}-jump-server"
-  }
-}
+# Cross-module IAM policies for the jump server. These live at the root because
+# they reference resources owned by several modules (eks, karpenter, vault,
+# grafana); putting them in any single module would create a module dependency
+# cycle.
+data "aws_caller_identity" "current" {}
 
 resource "aws_iam_role_policy" "jump_server_eks_management" {
   name = "${var.name}-jump-server-eks-management"
-  role = aws_iam_role.jump_server.name
+  role = module.jump_server.role_name
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -73,7 +15,7 @@ resource "aws_iam_role_policy" "jump_server_eks_management" {
         Sid      = "AssumeControllerInstallerRole"
         Effect   = "Allow"
         Action   = ["sts:AssumeRole"]
-        Resource = aws_iam_role.controller_installer.arn
+        Resource = module.eks.controller_installer_role_arn
       },
       {
         Sid    = "EKSManagement"
@@ -93,15 +35,15 @@ resource "aws_iam_role_policy" "jump_server_eks_management" {
       {
         Effect   = "Allow"
         Action   = ["eks:CreatePodIdentityAssociation"]
-        Resource = aws_eks_cluster.main.arn
+        Resource = module.eks.cluster_arn
       },
       {
         Effect = "Allow"
         Action = ["iam:PassRole"]
         Resource = [
-          aws_iam_role.pod_identity["argocd"].arn,
-          aws_iam_role.pod_identity["karpenter"].arn,
-          aws_iam_role.pod_identity["vault"].arn
+          module.eks.pod_identity_role_arns["argocd"],
+          module.karpenter.pod_identity_role_arn,
+          module.vault.pod_identity_role_arn
         ]
         Condition = {
           StringEquals = {
@@ -117,9 +59,9 @@ resource "aws_iam_role_policy" "jump_server_eks_management" {
           "eks:ListUpdates"
         ]
         Resource = [
-          aws_eks_cluster.main.arn,
-          format("arn:aws:eks:%s:%s:nodegroup/%s/*", var.aws_region, data.aws_caller_identity.current.account_id, aws_eks_cluster.main.name),
-          format("arn:aws:eks:%s:%s:nodegroup/%s/*/*", var.aws_region, data.aws_caller_identity.current.account_id, aws_eks_cluster.main.name)
+          module.eks.cluster_arn,
+          format("arn:aws:eks:%s:%s:nodegroup/%s/*", var.aws_region, data.aws_caller_identity.current.account_id, module.eks.cluster_name),
+          format("arn:aws:eks:%s:%s:nodegroup/%s/*/*", var.aws_region, data.aws_caller_identity.current.account_id, module.eks.cluster_name)
         ]
       },
       {
@@ -151,7 +93,7 @@ resource "aws_iam_role_policy" "jump_server_eks_management" {
         Sid      = "AllowEKSTagging"
         Effect   = "Allow"
         Action   = ["eks:TagResource"]
-        Resource = aws_eks_cluster.main.arn
+        Resource = module.eks.cluster_arn
       },
       {
         Effect = "Allow"
@@ -199,7 +141,7 @@ resource "aws_iam_role_policy" "jump_server_eks_management" {
 
 resource "aws_iam_role_policy" "jump_server_vault_initialization" {
   name = "${var.name}-jump-server-vault-initialization"
-  role = aws_iam_role.jump_server.name
+  role = module.jump_server.role_name
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -210,7 +152,30 @@ resource "aws_iam_role_policy" "jump_server_vault_initialization" {
         "secretsmanager:GetSecretValue",
         "secretsmanager:PutSecretValue"
       ]
-      Resource = aws_secretsmanager_secret.vault_initialization.arn
+      Resource = module.vault.initialization_secret_arn
     }]
+  })
+}
+
+resource "aws_iam_role_policy" "jump_server_grafana_administration" {
+  name = "${var.name}-jump-server-grafana-administration"
+  role = module.jump_server.role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "GrafanaWorkspaceAdministration"
+        Effect = "Allow"
+        Action = [
+          "grafana:DescribeWorkspace",
+          "grafana:ListPermissions",
+          "grafana:UpdatePermissions",
+          "grafana:CreateWorkspaceServiceAccountToken",
+          "grafana:DeleteWorkspaceServiceAccountToken"
+        ]
+        Resource = module.grafana.workspace_arn
+      }
+    ]
   })
 }

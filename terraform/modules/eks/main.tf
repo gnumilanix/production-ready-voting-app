@@ -1,3 +1,36 @@
+resource "aws_security_group" "eks_control_plane" {
+  name        = "${var.name}-eks-control-plane"
+  description = "Control-plane access from the jump server and VPC Prometheus"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description     = "HTTPS from the jump server"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [var.jump_server_security_group_id]
+  }
+
+  ingress {
+    description = "Prometheus metrics from the VPC"
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.name}-eks-control-plane"
+  }
+}
+
 resource "aws_iam_role" "eks_cluster" {
   name = "voting-app-eks-cluster-role"
 
@@ -25,14 +58,14 @@ resource "aws_iam_role_policy_attachment" "eks_cluster" {
 resource "aws_eks_cluster" "main" {
   name     = var.name
   role_arn = aws_iam_role.eks_cluster.arn
-  version  = "1.33"
+  version  = var.cluster_version
 
   access_config {
     authentication_mode = "API"
   }
 
   vpc_config {
-    subnet_ids              = [for subnet in values(aws_subnet.private) : subnet.id]
+    subnet_ids              = values(var.private_subnet_ids)
     security_group_ids      = [aws_security_group.eks_control_plane.id]
     endpoint_private_access = true
     endpoint_public_access  = false
@@ -45,21 +78,24 @@ resource "aws_eks_cluster" "main" {
   depends_on = [aws_iam_role_policy_attachment.eks_cluster]
 }
 
-resource "aws_ec2_tag" "karpenter_cluster_security_group_discovery" {
-  resource_id = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
-  key         = "karpenter.sh/discovery"
-  value       = var.name
+resource "aws_iam_openid_connect_provider" "eks" {
+  url            = aws_eks_cluster.main.identity[0].oidc[0].issuer
+  client_id_list = ["sts.amazonaws.com"]
+
+  tags = {
+    Name = "${var.name}-eks-oidc-provider"
+  }
 }
 
 resource "aws_eks_access_entry" "jump_server" {
   cluster_name  = aws_eks_cluster.main.name
-  principal_arn = aws_iam_role.jump_server.arn
+  principal_arn = var.jump_server_role_arn
   type          = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "jump_server_view" {
   cluster_name  = aws_eks_cluster.main.name
-  principal_arn = aws_iam_role.jump_server.arn
+  principal_arn = var.jump_server_role_arn
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
 
   depends_on = [aws_eks_access_entry.jump_server]
@@ -100,12 +136,6 @@ resource "aws_eks_access_entry" "console_user" {
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = aws_iam_role.eks_console.arn
   type          = "STANDARD"
-}
-
-resource "aws_eks_access_entry" "karpenter_node" {
-  cluster_name  = aws_eks_cluster.main.name
-  principal_arn = aws_iam_role.ec2_node["karpenter_node"].arn
-  type          = "EC2_LINUX"
 }
 
 resource "aws_eks_access_policy_association" "console_user_admin_view" {

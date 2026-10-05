@@ -1,7 +1,7 @@
 resource "aws_security_group" "efs" {
   name        = "${var.name}-efs"
   description = "NFS access to the Vault EFS file system from cluster nodes"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "NFS from within the VPC"
@@ -32,9 +32,9 @@ resource "aws_efs_file_system" "vault" {
 }
 
 resource "aws_efs_mount_target" "vault" {
-  for_each = aws_subnet.private
+  for_each = var.private_subnet_ids
 
   file_system_id  = aws_efs_file_system.vault.id
-  subnet_id       = each.value.id
+  subnet_id       = each.value
   security_groups = [aws_security_group.efs.id]
 }

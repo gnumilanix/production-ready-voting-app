@@ -1,8 +1,6 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  eks_oidc_issuer = trimprefix(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://")
-
   pod_identity_trust_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -30,10 +28,7 @@ locals {
     "ebs-csi",
     "efs-csi",
     "vpc-cni",
-    "external-dns",
-    "prometheus-exporter",
-    "karpenter",
-    "vault"
+    "external-dns"
   ])
 
   eks_addon_names = toset([
@@ -93,10 +88,8 @@ locals {
     }
   }
 
-  ec2_role_names = {
-    eks_node                        = "${var.name}-eks-node-role"
-    karpenter_node_instance_profile = "${var.name}-karpenter-node-instance-profile-role"
-    karpenter_node                  = "${var.name}-karpenter-node-role"
+  ec2_node_role_names = {
+    eks_node = "${var.name}-eks-node-role"
   }
 
   eks_node_policy_arns = {

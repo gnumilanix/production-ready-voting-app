@@ -1,71 +1,71 @@
 output "vpc_id" {
   description = "ID of the application VPC."
-  value       = aws_vpc.main.id
+  value       = module.vpc.vpc_id
 }
 
 output "vpc_cidr" {
   description = "IPv4 CIDR block assigned to the VPC."
-  value       = aws_vpc.main.cidr_block
+  value       = module.vpc.vpc_cidr
 }
 
 output "availability_zones" {
   description = "Three availability zones hosting the application subnets."
-  value       = local.availability_zones
+  value       = module.vpc.availability_zones
 }
 
 output "public_subnet_ids" {
   description = "Public subnet IDs, keyed by zero-based subnet index."
-  value       = { for index, subnet in aws_subnet.public : index => subnet.id }
+  value       = module.vpc.public_subnet_ids
 }
 
 output "private_subnet_ids" {
   description = "Private subnet IDs, keyed by zero-based subnet index."
-  value       = { for index, subnet in aws_subnet.private : index => subnet.id }
+  value       = module.vpc.private_subnet_ids
 }
 
 output "internet_gateway_id" {
   description = "ID of the VPC internet gateway."
-  value       = aws_internet_gateway.main.id
+  value       = module.vpc.internet_gateway_id
 }
 
 output "nat_gateway_ids" {
   description = "ID of the shared NAT gateway."
-  value       = aws_nat_gateway.main.id
+  value       = module.vpc.nat_gateway_ids
 }
 
 output "nat_gateway_public_ips" {
   description = "Public IP address of the shared NAT gateway."
-  value       = aws_eip.nat.public_ip
+  value       = module.vpc.nat_gateway_public_ips
 }
 
 output "jump_server_instance_id" {
   description = "ID of the public jump server instance."
-  value       = aws_instance.jump_server.id
+  value       = module.jump_server.instance_id
 }
 
 output "jump_server_public_ip" {
   description = "Public IP address of the jump server."
-  value       = aws_instance.jump_server.public_ip
+  value       = module.jump_server.public_ip
 }
 
 output "jump_server_key_pair_name" {
   description = "EC2 key pair name used by the jump server."
-  value       = aws_key_pair.jump_server.key_name
+  value       = module.jump_server.key_pair_name
 }
 
 output "jump_server_security_group_id" {
   description = "Security group ID attached to the jump server."
-  value       = aws_security_group.jump_server.id
+  value       = module.jump_server.security_group_id
 }
 
 output "eks_control_plane_security_group_id" {
-  description = "Security group ID for the future EKS control plane."
-  value       = aws_security_group.eks_control_plane.id
+  description = "Security group ID for the EKS control plane."
+  value       = module.eks.control_plane_security_group_id
 }
 
 output "eks_cluster_name" {
   description = "Name of the EKS cluster."
-  value       = aws_eks_cluster.main.name
+  value       = module.eks.cluster_name
 }
 
 output "eks_cluster_region" {
@@ -75,66 +75,66 @@ output "eks_cluster_region" {
 
 output "eks_cluster_arn" {
   description = "ARN of the EKS cluster."
-  value       = aws_eks_cluster.main.arn
+  value       = module.eks.cluster_arn
 }
 
 output "eks_cluster_endpoint" {
   description = "Private Kubernetes API endpoint for the EKS cluster."
-  value       = aws_eks_cluster.main.endpoint
+  value       = module.eks.cluster_endpoint
 }
 
 output "aws_load_balancer_controller_role_arn" {
   description = "IAM role ARN assumed by the AWS Load Balancer Controller service account."
-  value       = aws_iam_role.aws_load_balancer_controller.arn
+  value       = module.aws_load_balancer_controller.role_arn
 }
 
 output "controller_installer_role_arn" {
   description = "IAM role assumed by the jump server to install the AWS Load Balancer Controller."
-  value       = aws_iam_role.controller_installer.arn
+  value       = module.eks.controller_installer_role_arn
 }
 
 output "eks_console_role_arn" {
   description = "IAM role users assume to get read-only EKS console access."
-  value       = aws_iam_role.eks_console.arn
+  value       = module.eks.eks_console_role_arn
 }
 
 output "vault_efs_file_system_id" {
   description = "EFS file system ID backing the Vault data volume."
-  value       = aws_efs_file_system.vault.id
+  value       = module.vault.efs_file_system_id
 }
 
 output "amp_remote_write_url" {
   description = "Remote-write endpoint of the AMP workspace for the Prometheus agent."
-  value       = "${aws_prometheus_workspace.main.prometheus_endpoint}api/v1/remote_write"
+  value       = module.amp.remote_write_url
 }
 
 output "grafana_workspace_endpoint" {
   description = "Endpoint URL of the AMG Grafana workspace."
-  value       = aws_grafana_workspace.main.endpoint
+  value       = module.grafana.workspace_endpoint
 }
 
 output "amg_workspace_id" {
-  value       = aws_grafana_workspace.main.id
+  value       = module.grafana.workspace_id
   description = "The Amazon Managed Grafana Workspace ID"
 }
 
 output "amg_service_account_id" {
-  value       = aws_grafana_workspace_service_account.datasource_provisioner.service_account_id
+  value       = module.grafana.service_account_id
   description = "Service account ID used to provision Grafana resources"
 }
 
 output "grafana_admins_group_id" {
   description = "Identity Center group ID for GrafanaAdmins."
-  value       = aws_identitystore_group.grafana_admins.group_id
+  value       = module.grafana.grafana_admins_group_id
 }
 
 output "grafana_workspace_role_arn" {
-  value       = aws_iam_role.grafana_workspace.arn
+  value       = module.grafana.workspace_role_arn
   description = "IAM role ARN used by the Grafana workspace to query AMP data"
 }
 
 output "amp_workspace_id" {
-  value       = aws_prometheus_workspace.main.id
+  value       = module.amp.workspace_id
   description = "The Amazon Managed Prometheus Workspace ID"
 }
 
