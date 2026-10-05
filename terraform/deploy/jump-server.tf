@@ -186,6 +186,12 @@ resource "aws_iam_role_policy" "jump_server_eks_management" {
           "autoscaling:UpdateAutoScalingGroup"
         ]
         Resource = "*"
+      },
+      {
+        Sid      = "AllowELBDescribe"
+        Effect   = "Allow"
+        Action   = ["elbv2:DescribeLoadBalancers"]
+        Resource = "*"
       }
     ]
   })

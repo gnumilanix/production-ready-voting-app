@@ -72,29 +72,6 @@
           changed_when: false
           ignore_errors: true
 
-        - name: Block all Argo CD syncs with a deny sync window on the project
-          ansible.builtin.command:
-            argv:
-              - argocd
-              - --core
-              - proj
-              - windows
-              - add
-              - playground
-              - --kind
-              - deny
-              - --schedule
-              - "* * * * *"
-              - --duration
-              - 24h
-              - --applications
-              - "*"
-              - --namespaces
-              - "*"
-          register: argocd_sync_window
-          changed_when: true
-          ignore_errors: true
-
         - name: Cascade-delete the remaining Argo CD applications
           ansible.builtin.command:
             argv:
