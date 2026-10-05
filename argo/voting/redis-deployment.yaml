@@ -27,17 +27,3 @@ spec:
       volumes:
         - name: redis-data
           emptyDir: {}
-      tolerations:
-        - key: workload-type
-          operator: Equal
-          value: voting-app-spot-stateful
-          effect: PreferNoSchedule
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: workload-type
-                    operator: In
-                    values:
-                      - voting-app-spot-stateful

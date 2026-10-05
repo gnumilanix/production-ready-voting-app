@@ -14,17 +14,7 @@ spec:
     metadata:
       labels:
         app: db
-      annotations:
-        vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/role: voting-role
-        vault.hashicorp.com/agent-inject-secret-config: secret/data/postgres-creds
-        vault.hashicorp.com/agent-inject-template-config: |
-          {{- with secret "secret/data/postgres-creds" -}}
-          export POSTGRES_USER="{{ .Data.data.POSTGRES_USER }}"
-          export POSTGRES_PASSWORD="{{ .Data.data.POSTGRES_PASSWORD }}"
-          {{- end -}}
     spec:
-      serviceAccountName: voting
       containers:
         - name: postgres
           image: postgres:15-alpine
@@ -39,17 +29,3 @@ spec:
       volumes:
         - name: db-data
           emptyDir: {}
-      tolerations:
-        - key: workload-type
-          operator: Equal
-          value: voting-app-spot-stateful
-          effect: PreferNoSchedule
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: workload-type
-                    operator: In
-                    values:
-                      - voting-app-spot-stateful

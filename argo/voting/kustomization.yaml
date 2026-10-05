@@ -14,9 +14,21 @@ resources:
   - vote-service.yaml
   - worker-deployment.yaml
 patches:
-  - path: karpenter-affinity-patch.yaml
+  - path: patch/karpenter-affinity.yaml
     target:
       group: apps
       version: v1
       kind: Deployment
       labelSelector: "app in (result, worker)"
+  - path: patch/vault-db.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      labelSelector: "app in (db, result, worker)"
+  - path: patch/spot-stateful-affinity.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      labelSelector: "app in (db, redis)"
