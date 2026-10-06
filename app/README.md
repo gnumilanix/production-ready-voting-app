@@ -5,17 +5,17 @@ A simple distributed application running across multiple Docker containers.
 
 ## Kubernetes deployment
 
-In this repository, Argo CD deploys the voting app from [`argo/voting/`](../argo/voting/). Manage the app through its Argo CD application rather than applying standalone `k8s-specifications/` manifests.
+In this repository, Argo CD deploys the voting app from [`argo/voting/`](../argo/voting/). Manage the app through its Argo CD application rather than applying manifests directly.
 
 ## Architecture
 
 ![Architecture diagram](architecture.excalidraw.png)
 
-* A front-end web app in [Python](/vote) which lets you vote between two options
+* A front-end web app in [Python](vote) which lets you vote between two options
 * A [Redis](https://hub.docker.com/_/redis/) which collects new votes
-* A [.NET](/worker/) worker which consumes votes and stores them in…
+* A [.NET](worker/) worker which consumes votes and stores them in…
 * A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
-* A [Node.js](/result) web app which shows the results of the voting in real time
+* A [Node.js](result) web app which shows the results of the voting in real time
 
 ## Notes
 

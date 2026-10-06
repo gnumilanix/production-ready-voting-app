@@ -10,6 +10,7 @@ It uses:
 - Karpenter + Node groups
 - Argo CD, including Argo Rollouts and Image Updater
 - Vault (data stored on Amazon EFS and unsealed with KMS)
+- Network policies (least-privilege pod-to-pod and ingress rules, enforced by the VPC CNI)
 - Amazon Managed Service for Prometheus (AMP) and Amazon Managed Grafana (AMG)
 
 Terraform provisions the infrastructure, and Ansible configures the cluster. A `kube-prometheus-stack` agent (no in-cluster Grafana) scrapes cluster metrics and remote-writes them to AMP via EKS Pod Identity.
@@ -76,7 +77,7 @@ Configure the following GitHub Actions secrets and variables:
 - `JUMP_SERVER_PUBLIC_KEY`: OpenSSH public key installed on the jump server; Terraform injects it into the EC2 key pair.
 - `ARGOCD_REPO_TOKEN`: GitHub token used by Argo CD / Image Updater to read this repository and write back image tags.
 
-Ansible generates the PostgreSQL password and writes it to Vault at `secret/postgres-creds`.
+Ansible generates the PostgreSQL password and writes it to Vault at `secret/postgres-creds`. The `db`, `result`, and `worker` deployments are annotated for Vault Agent injection and receive the credentials from Vault at pod startup.
 
 **Variables**:
 - `AWS_REGION`: AWS region all infrastructure is deployed to (for example `us-east-1`).

@@ -13,6 +13,10 @@ resources:
   - vote-deployment.yaml
   - vote-service.yaml
   - worker-deployment.yaml
+  - redis-networkpolicy.yaml
+  - frontend-networkpolicy.yaml
+  - postgres-networkpolicy.yaml
+  - worker-networkpolicy.yaml
 patches:
   - path: patch/karpenter-affinity.yaml
     target:
