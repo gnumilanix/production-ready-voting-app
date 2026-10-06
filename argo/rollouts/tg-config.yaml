@@ -3,6 +3,8 @@ kind: TargetGroupConfiguration
 metadata:
   name: tg-config
   namespace: argo-rollouts
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
 spec:
   targetReference:
     group: ""
