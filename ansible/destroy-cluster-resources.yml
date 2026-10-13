@@ -57,6 +57,67 @@
           register: argocd_core_login
           changed_when: false
 
+        - name: Use window to block all applications from syncing
+          ansible.builtin.command:
+            argv:
+              - argocd
+              - --core
+              - proj
+              - windows
+              - add
+              - "{{ item }}"
+              - --kind
+              - deny
+              - --schedule
+              - "* * * * *"
+              - --duration
+              - 1h
+              - --applications
+              - "*"
+          loop:
+            - playground
+            - default
+          register: argocd_sync_window
+          changed_when: true
+          ignore_errors: true
+
+        - name: Delete rollout TargetGroupConfiguration
+          ansible.builtin.command:
+            argv:
+              - kubectl
+              - delete
+              - targetgroupconfiguration
+              - tg-config
+              - --namespace
+              - argo-rollouts
+              - --ignore-not-found=true
+              - --wait=true
+              - --timeout=5m
+          register: rollout_tg_config_delete
+          changed_when: "' deleted' in rollout_tg_config_delete.stdout"
+          ignore_errors: true
+
+        - name: Delete argo argo-rollouts-controller and rollouts using Argo CD CLI
+          ansible.builtin.command:
+            argv:
+              - argocd
+              - --core
+              - app
+              - delete
+              - "{{ item }}"
+              - --app-namespace
+              - argocd
+              - --cascade
+              - --yes
+              - --wait
+          loop:
+            - argo-rollouts-controller
+            - rollouts
+            - argo-rollouts-bootstrap
+          register: rollouts_app_delete
+          changed_when: true
+          ignore_errors: true
+
         - name: List Argo CD applications
           ansible.builtin.command:
             argv:
@@ -158,6 +219,22 @@
       register: karpenter_nodeclass_delete
       changed_when: "' deleted' in karpenter_nodeclass_delete.stdout"
       when: eks_cluster_check.rc == 0
+
+    - name: Delete all remaining target groups
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - delete
+          - targetgroupconfiguration
+          - --all
+          - --all-namespaces
+          - --ignore-not-found=true
+          - --wait=true
+          - --timeout=5m
+      register: remaining_target_groups_delete
+      changed_when: "' deleted' in remaining_target_groups_delete.stdout"
+      when: eks_cluster_check.rc == 0
+      ignore_errors: true
 
     - name: Delete the shared Gateway and wait for its ALB cleanup
       ansible.builtin.command:
