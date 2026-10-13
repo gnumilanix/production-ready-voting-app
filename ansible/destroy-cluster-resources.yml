@@ -112,7 +112,6 @@
               - --wait
           loop:
             - argo-rollouts-controller
-            - rollouts
             - argo-rollouts-bootstrap
           register: rollouts_app_delete
           changed_when: true
