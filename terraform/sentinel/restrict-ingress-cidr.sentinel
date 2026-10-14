@@ -4,7 +4,7 @@ import "tfplan/v2" as tfplan
 import "common"
 
 is_exempt = func(address) {
-	return common.str_contains(address, "jump")
+	return address is "module.jump_server.aws_security_group.jump_server"
 }
 
 applied = filter common.applied_changes as rc {

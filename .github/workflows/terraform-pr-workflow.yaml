@@ -7,6 +7,7 @@ on:
       - 'terraform/**'
       - '.github/workflows/terraform-pr-workflow.yaml'
       - '.github/actions/terraform-init/**'
+      - '.github/scripts/**'
 
 permissions:
   contents: read
@@ -51,7 +52,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Sentinel Format Check
-        uses: hashicorp/sentinel-github-actions@master
+        uses: hashicorp/sentinel-github-actions@ad081c1fa7a6d8a53f9afd0996182b163e4a76a8
         with:
           stl_actions_version: ${{ env.SENTINEL_VERSION }}
           stl_actions_subcommand: fmt
@@ -59,7 +60,7 @@ jobs:
           stl_actions_comment: false
 
       - name: Sentinel Test
-        uses: hashicorp/sentinel-github-actions@master
+        uses: hashicorp/sentinel-github-actions@ad081c1fa7a6d8a53f9afd0996182b163e4a76a8
         with:
           stl_actions_version: ${{ env.SENTINEL_VERSION }}
           stl_actions_subcommand: test
@@ -107,15 +108,11 @@ jobs:
         run: terraform plan -input=false -out=tfplan
 
       - name: Setup Sentinel
-        if: matrix.stack == 'deploy'
-        uses: hashicorp/setup-sentinel@main
+        uses: hashicorp/setup-sentinel@79f4f0c293a3f625c0cb2edc3d6c759a42670463
         with:
           version: ${{ env.SENTINEL_VERSION }}
 
       - name: Evaluate Sentinel policies against the plan
-        # Policies target deploy-stack resources (EKS, node groups, SGs, S3);
-        # the bootstrap stack has no plan-level policies to evaluate.
-        if: matrix.stack == 'deploy'
         working-directory: terraform/sentinel
         run: |
           terraform -chdir="../${{ matrix.stack }}" show -json tfplan > /tmp/tfplan.json

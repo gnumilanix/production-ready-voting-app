@@ -1,0 +1,45 @@
+resource_changes = [
+	{
+		"address": "aws_s3_bucket_public_access_block.state",
+		"mode":    "managed",
+		"type":    "aws_s3_bucket_public_access_block",
+		"change": {
+			"actions": ["create"],
+			"after": {
+				"block_public_acls":       true,
+				"block_public_policy":     true,
+				"block_public_buckets":    true,
+				"restrict_public_buckets": true,
+			},
+		},
+	},
+	{
+		"address": "aws_s3_bucket_acl.public_write",
+		"mode":    "managed",
+		"type":    "aws_s3_bucket_acl",
+		"change": {
+			"actions": ["create"],
+			"after": {
+				"access_control_policy": [
+					{
+						"grant": [
+							{
+								"grantee": [
+									{
+										"type": "Group",
+										"uri":  "http://acs.amazonaws.com/groups/global/AllUsers",
+									},
+								],
+								"permission": "WRITE",
+							},
+						],
+					},
+				],
+			},
+		},
+	},
+]
+
+variables = {}
+
+configuration = {}

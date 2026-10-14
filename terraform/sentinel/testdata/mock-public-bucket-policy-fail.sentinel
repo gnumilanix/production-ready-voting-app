@@ -1,0 +1,40 @@
+resource_changes = [
+	{
+		"address": "aws_s3_bucket_public_access_block.state",
+		"mode":    "managed",
+		"type":    "aws_s3_bucket_public_access_block",
+		"change": {
+			"actions": ["create"],
+			"after": {
+				"block_public_acls":       true,
+				"block_public_policy":     true,
+				"block_public_buckets":    true,
+				"restrict_public_buckets": true,
+			},
+		},
+	},
+	{
+		"address": "aws_s3_bucket_acl.state",
+		"mode":    "managed",
+		"type":    "aws_s3_bucket_acl",
+		"change": {
+			"actions": ["create"],
+			"after":   {"acl": "private"},
+		},
+	},
+	{
+		"address": "aws_s3_bucket_policy.public_write",
+		"mode":    "managed",
+		"type":    "aws_s3_bucket_policy",
+		"change": {
+			"actions": ["create"],
+			"after": {
+				"policy": "{\"Version\":\"2012-10-17\",\"Statement\":{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"*\"]},\"Action\":\"*\",\"Resource\":\"arn:aws:s3:::example/*\"}}",
+			},
+		},
+	},
+]
+
+variables = {}
+
+configuration = {}
