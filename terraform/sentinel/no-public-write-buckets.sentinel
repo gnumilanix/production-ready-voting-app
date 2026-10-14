@@ -3,6 +3,7 @@
 
 import "tfplan/v2" as tfplan
 import "json"
+import "strings"
 import "common"
 
 write_actions = ["s3:PutObject", "s3:DeleteObject", "s3:PutBucketPolicy", "s3:PutBucketAcl", "s3:*"]
@@ -18,17 +19,20 @@ principal_value_is_public = func(value) {
 	if value is "*" {
 		return true
 	}
-	if value is list {
-		return any value as item {
-			item is "*"
-		}
+	if strings.has_prefix(json.marshal(value), "\"") {
+		return value is "*"
 	}
-	return false
+	return any value as item {
+		item is "*"
+	}
 }
 
 principal_is_public = func(principal) {
 	if principal_value_is_public(principal) {
 		return true
+	}
+	if strings.has_prefix(json.marshal(principal), "\"") {
+		return false
 	}
 	if principal is not null {
 		for principal as _, values {
@@ -44,7 +48,7 @@ action_list = func(actions) {
 	if actions is null {
 		return []
 	}
-	if actions is string {
+	if strings.has_prefix(json.marshal(actions), "\"") {
 		return [actions]
 	}
 	return actions
@@ -52,10 +56,12 @@ action_list = func(actions) {
 
 policy_statements = func(policy) {
 	statements = json.unmarshal(policy).Statement
-	if statements is list {
-		return statements
+	for statements as key, _ {
+		if key is "Effect" {
+			return [statements]
+		}
 	}
-	return [statements]
+	return statements
 }
 
 violating_access_blocks = filter common.applied_changes as rc {
