@@ -1,0 +1,15 @@
+# Shared helpers for the voting app policy set.
+
+import "tfplan/v2" as tfplan
+import "strings"
+
+# Resource changes being created or updated (managed resources only).
+applied_changes = filter tfplan.resource_changes as rc {
+	rc.mode is "managed" and
+		("create" in rc.change.actions or "update" in rc.change.actions)
+}
+
+# Substring match (this Sentinel runtime has no strings.contains).
+str_contains = func(s, sub) {
+	return length(strings.split(s, sub)) > 1
+}

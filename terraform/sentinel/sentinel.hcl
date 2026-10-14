@@ -8,6 +8,10 @@ mock "tfplan/v2" {
   }
 }
 
+import "module" "common" {
+  source = "./modules/common/common.sentinel"
+}
+
 policy "allowed-instance-sizes" {
   source            = "./allowed-instance-sizes.sentinel"
   enforcement_level = "hard-mandatory"

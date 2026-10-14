@@ -1,39 +1,33 @@
-# Policy 4: EKS clusters must run Kubernetes 1.35 or newer.
+# EKS clusters must run Kubernetes 1.35 or newer.
 
 import "tfplan/v2" as tfplan
 import "strings"
+import "common"
 
 min_minor = 35
 
-applied = filter tfplan.resource_changes as rc {
-	rc.mode is "managed" and
-		("create" in rc.change.actions or "update" in rc.change.actions) and
-		rc.type is "aws_eks_cluster"
+clusters = filter common.applied_changes as rc {
+	rc.type is "aws_eks_cluster"
 }
 
-version_too_old = filter applied as rc {
-	rc.change.after.version is not null and
-		int(strings.split(rc.change.after.version, ".")[1]) < min_minor
-}
+violations = {}
 
-version_unpinned = filter applied as rc {
-	rc.change.after.version is null
-}
-
-report = func() {
-	for version_too_old as rc {
-		print("eks-version violation:", rc.address, "runs", rc.change.after.version, "(minimum 1.35)")
+for clusters as rc {
+	version = rc.change.after.version
+	if version is null {
+		violations[rc.address] = "does not pin a cluster version"
+	} else if int(strings.split(version, ".")[1]) < min_minor {
+		violations[rc.address] = "runs Kubernetes " + version + " (minimum 1.35)"
 	}
-	for version_unpinned as rc {
-		print("eks-version violation:", rc.address, "does not pin a cluster version")
+}
+
+print_violations = func() {
+	for violations as address, msg {
+		print("eks-version violation:", address, msg)
 	}
 	return true
 }
 
-report_rule = rule { report() }
-
 main = rule {
-	report_rule and
-	length(version_too_old) is 0 and
-	length(version_unpinned) is 0
+	print_violations() and length(violations) is 0
 }
