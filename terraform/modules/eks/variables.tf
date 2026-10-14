@@ -21,7 +21,7 @@ variable "private_subnet_ids" {
 variable "cluster_version" {
   description = "Kubernetes version for the EKS cluster."
   type        = string
-  default     = "1.33"
+  default     = "1.35"
 }
 
 variable "jump_server_role_arn" {

@@ -1,0 +1,63 @@
+# Policy 3: no security group ingress may use 0.0.0.0/0, except the jump server.
+
+import "tfplan/v2" as tfplan
+import "strings"
+
+str_contains = func(s, sub) {
+	return length(strings.split(s, sub)) > 1
+}
+
+is_exempt = func(address) {
+	return str_contains(address, "jump")
+}
+
+applied = filter tfplan.resource_changes as rc {
+	rc.mode is "managed" and
+		("create" in rc.change.actions or "update" in rc.change.actions) and
+		not is_exempt(rc.address)
+}
+
+# Inline ingress blocks on aws_security_group.
+violating_sgs = filter applied as rc {
+	rc.type is "aws_security_group" and
+		rc.change.after.ingress is not null and
+		any rc.change.after.ingress as block {
+			block.cidr_blocks is not null and "0.0.0.0/0" in block.cidr_blocks
+		}
+}
+
+# Standalone ingress rules.
+violating_rules = filter applied as rc {
+	rc.type is "aws_security_group_rule" and
+		rc.change.after.type is "ingress" and
+		rc.change.after.cidr_blocks is not null and
+		"0.0.0.0/0" in rc.change.after.cidr_blocks
+}
+
+# VPC security group ingress rule resources.
+violating_vpc_rules = filter applied as rc {
+	rc.type is "aws_vpc_security_group_ingress_rule" and
+		rc.change.after.cidr_ipv4 is "0.0.0.0/0"
+}
+
+report = func() {
+	for violating_sgs as rc {
+		print("ingress violation:", rc.address, "has ingress open to 0.0.0.0/0")
+	}
+	for violating_rules as rc {
+		print("ingress violation:", rc.address, "has ingress open to 0.0.0.0/0")
+	}
+	for violating_vpc_rules as rc {
+		print("ingress violation:", rc.address, "has ingress open to 0.0.0.0/0")
+	}
+	return true
+}
+
+report_rule = rule { report() }
+
+main = rule {
+	report_rule and
+	length(violating_sgs) is 0 and
+	length(violating_rules) is 0 and
+	length(violating_vpc_rules) is 0
+}

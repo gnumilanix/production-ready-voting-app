@@ -1,0 +1,85 @@
+# Violating fixture: every policy finds at least one violation.
+
+resource_changes = [
+  {
+    "address": "aws_instance.oversized",
+    "mode": "managed",
+    "type": "aws_instance",
+    "change": {
+      "actions": ["create"],
+      "after": { "instance_type": "t3.xlarge" },
+    },
+  },
+  {
+    "address": "module.eks.aws_eks_node_group.oversized",
+    "mode": "managed",
+    "type": "aws_eks_node_group",
+    "change": {
+      "actions": ["create"],
+      "after": {
+        "instance_types": ["t3.large"],
+        "scaling_config": [{ "desired_size": 2, "min_size": 1, "max_size": 8 }],
+      },
+    },
+  },
+  {
+    "address": "module.eks.aws_eks_cluster.main",
+    "mode": "managed",
+    "type": "aws_eks_cluster",
+    "change": {
+      "actions": ["create"],
+      "after": {
+        "version": "1.30",
+        "vpc_config": [{ "endpoint_public_access": true, "endpoint_private_access": true }],
+      },
+    },
+  },
+  {
+    "address": "aws_s3_bucket_public_access_block.open",
+    "mode": "managed",
+    "type": "aws_s3_bucket_public_access_block",
+    "change": {
+      "actions": ["create"],
+      "after": {
+        "block_public_acls": false,
+        "block_public_policy": false,
+        "block_public_buckets": false,
+        "restrict_public_buckets": false,
+      },
+    },
+  },
+  {
+    "address": "aws_s3_bucket_acl.writable",
+    "mode": "managed",
+    "type": "aws_s3_bucket_acl",
+    "change": {
+      "actions": ["create"],
+      "after": { "acl": "public-read-write" },
+    },
+  },
+  {
+    "address": "module.vpc.aws_security_group.open",
+    "mode": "managed",
+    "type": "aws_security_group",
+    "change": {
+      "actions": ["create"],
+      "after": {
+        "ingress": [
+          { "description": "world", "from_port": 22, "to_port": 22, "protocol": "tcp", "cidr_blocks": ["0.0.0.0/0"] },
+        ],
+      },
+    },
+  },
+]
+
+variables = {
+  "aws_region": { "value": "eu-west-1" },
+}
+
+configuration = {
+  "provider_config": {
+    "aws": {
+      "expressions": { "region": { "constant_value": "eu-west-1" } },
+    },
+  },
+}

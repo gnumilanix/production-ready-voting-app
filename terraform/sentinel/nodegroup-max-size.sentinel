@@ -1,0 +1,30 @@
+# Policy 7: EKS managed node groups may scale to at most 4 nodes.
+
+import "tfplan/v2" as tfplan
+
+max_allowed = 4
+
+applied = filter tfplan.resource_changes as rc {
+	rc.mode is "managed" and
+		("create" in rc.change.actions or "update" in rc.change.actions) and
+		rc.type is "aws_eks_node_group"
+}
+
+violating = filter applied as rc {
+	any rc.change.after.scaling_config as cfg {
+		cfg.max_size is not null and cfg.max_size > max_allowed
+	}
+}
+
+report = func() {
+	for violating as rc {
+		print("nodegroup-size violation:", rc.address, "allows scaling beyond", max_allowed, "nodes")
+	}
+	return true
+}
+
+report_rule = rule { report() }
+
+main = rule {
+	report_rule and length(violating) is 0
+}

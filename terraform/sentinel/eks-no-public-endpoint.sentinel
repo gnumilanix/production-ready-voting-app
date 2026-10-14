@@ -1,0 +1,30 @@
+# Policy 5: EKS cluster API endpoints must not be publicly accessible.
+
+import "tfplan/v2" as tfplan
+
+applied = filter tfplan.resource_changes as rc {
+	rc.mode is "managed" and
+		("create" in rc.change.actions or "update" in rc.change.actions) and
+		rc.type is "aws_eks_cluster"
+}
+
+# The provider default for endpoint_public_access is true, so anything other
+# than an explicit false is a violation.
+violating = filter applied as rc {
+	any rc.change.after.vpc_config as cfg {
+		cfg.endpoint_public_access is not false
+	}
+}
+
+report = func() {
+	for violating as rc {
+		print("eks-endpoint violation:", rc.address, "allows public API endpoint access")
+	}
+	return true
+}
+
+report_rule = rule { report() }
+
+main = rule {
+	report_rule and length(violating) is 0
+}

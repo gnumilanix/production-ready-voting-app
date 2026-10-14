@@ -37,6 +37,10 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Sentinel simulator artifacts (mock data is generated from plan JSON in CI)
+terraform/sentinel/mock-tfplan.sentinel
+.sentinel/
+
 # Local backend configuration may contain environment-specific values
 /terraform/**/backend.hcl
 
