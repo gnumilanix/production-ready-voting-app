@@ -15,6 +15,7 @@ permissions:
 env:
   TF_VAR_aws_region: ${{ vars.AWS_REGION }}
   TF_VAR_state_bucket_name: ${{ vars.STATE_BUCKET_NAME }}
+  SENTINEL_VERSION: 0.41.0
 
 concurrency:
   group: voting-app-terraform-pr-${{ github.event.pull_request.number }}
@@ -42,9 +43,32 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
+  policy-quality:
+    name: Sentinel policy checks (fmt + test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Sentinel Format Check
+        uses: hashicorp/sentinel-github-actions@master
+        with:
+          stl_actions_version: ${{ env.SENTINEL_VERSION }}
+          stl_actions_subcommand: fmt
+          stl_actions_working_dir: terraform/sentinel
+          stl_actions_comment: false
+
+      - name: Sentinel Test
+        uses: hashicorp/sentinel-github-actions@master
+        with:
+          stl_actions_version: ${{ env.SENTINEL_VERSION }}
+          stl_actions_subcommand: test
+          stl_actions_working_dir: terraform/sentinel
+          stl_actions_comment: false
+
   plan:
     runs-on: ubuntu-latest
-    needs: [validate]
+    needs: [validate, policy-quality]
     strategy:
       matrix:
         include:
@@ -80,4 +104,21 @@ jobs:
           region: ${{ vars.AWS_REGION }}
 
       - name: Terraform Plan
-        run: terraform plan -input=false
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Setup Sentinel
+        if: matrix.stack == 'deploy'
+        uses: hashicorp/setup-sentinel@main
+        with:
+          version: ${{ env.SENTINEL_VERSION }}
+
+      - name: Evaluate Sentinel policies against the plan
+        # Policies target deploy-stack resources (EKS, node groups, SGs, S3);
+        # the bootstrap stack has no plan-level policies to evaluate.
+        if: matrix.stack == 'deploy'
+        working-directory: terraform/sentinel
+        run: |
+          terraform -chdir="../${{ matrix.stack }}" show -json tfplan > /tmp/tfplan.json
+          python3 "$GITHUB_WORKSPACE/.github/scripts/generate-sentinel-mock.py" /tmp/tfplan.json mock-tfplan.sentinel
+          sentinel apply -config=sentinel.hcl
+          rm mock-tfplan.sentinel

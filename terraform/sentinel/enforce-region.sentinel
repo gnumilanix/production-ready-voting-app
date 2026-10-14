@@ -1,0 +1,63 @@
+# Policy 6: all resources must be deployed to us-east-1.
+# Checks resolved Terraform variables and any constant provider regions.
+
+import "tfplan/v2" as tfplan
+import "strings"
+
+str_contains = func(s, sub) {
+	return length(strings.split(s, sub)) > 1
+}
+
+required_region = "us-east-1"
+
+region_variables = filter tfplan.variables as name, variable {
+	str_contains(name, "region")
+}
+
+violating_variables = filter region_variables as name, variable {
+	variable.value is not required_region
+}
+
+# Safely read a constant region from a provider config, returning null when the
+# provider has no expressions (e.g. cloudinit) or no region entry.
+constant_region = func(provider) {
+	if "expressions" not in keys(provider) {
+		return null
+	}
+	expressions = provider["expressions"]
+	if "region" not in keys(expressions) {
+		return null
+	}
+	region = expressions["region"]
+	if "constant_value" not in keys(region) {
+		return null
+	}
+	return region["constant_value"]
+}
+
+aws_providers = filter tfplan.configuration.provider_config as pname, provider {
+	str_contains(pname, "aws")
+}
+
+violating_providers = filter aws_providers as pname, provider {
+	constant_region(provider) is not null and
+		constant_region(provider) is not required_region
+}
+
+report = func() {
+	for violating_variables as name, variable {
+		print("region violation: variable", name, "=", variable.value, "(must be us-east-1)")
+	}
+	for violating_providers as pname, provider {
+		print("region violation: provider", pname, "has constant region", provider.expressions.region.constant_value)
+	}
+	return true
+}
+
+report_rule = rule { report() }
+
+main = rule {
+	report_rule and
+	length(violating_variables) is 0 and
+	length(violating_providers) is 0
+}

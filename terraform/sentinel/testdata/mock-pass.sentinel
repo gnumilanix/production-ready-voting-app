@@ -1,0 +1,90 @@
+# Compliant fixture: everything satisfies all seven policies.
+
+resource_changes = [
+  {
+    "address": "module.jump_server.aws_instance.jump_server",
+    "mode": "managed",
+    "type": "aws_instance",
+    "change": {
+      "actions": ["create"],
+      "after": { "instance_type": "t3.small" },
+    },
+  },
+  {
+    "address": "module.eks.aws_eks_node_group.spot[\"spot-small-general\"]",
+    "mode": "managed",
+    "type": "aws_eks_node_group",
+    "change": {
+      "actions": ["create"],
+      "after": {
+        "instance_types": ["t3.small"],
+        "scaling_config": [{ "desired_size": 2, "min_size": 1, "max_size": 4 }],
+      },
+    },
+  },
+  {
+    "address": "module.eks.aws_eks_cluster.main",
+    "mode": "managed",
+    "type": "aws_eks_cluster",
+    "change": {
+      "actions": ["create"],
+      "after": {
+        "version": "1.35",
+        "vpc_config": [{ "endpoint_public_access": false, "endpoint_private_access": true }],
+      },
+    },
+  },
+  {
+    "address": "aws_s3_bucket_public_access_block.state",
+    "mode": "managed",
+    "type": "aws_s3_bucket_public_access_block",
+    "change": {
+      "actions": ["create"],
+      "after": {
+        "block_public_acls": true,
+        "block_public_policy": true,
+        "block_public_buckets": true,
+        "restrict_public_buckets": true,
+      },
+    },
+  },
+  {
+    "address": "module.jump_server.aws_security_group.jump_server",
+    "mode": "managed",
+    "type": "aws_security_group",
+    "change": {
+      "actions": ["create"],
+      "after": {
+        "ingress": [
+          { "description": "SSH", "from_port": 22, "to_port": 22, "protocol": "tcp", "cidr_blocks": ["203.0.113.10/32"] },
+        ],
+      },
+    },
+  },
+  {
+    "address": "module.vpc.aws_security_group.internal",
+    "mode": "managed",
+    "type": "aws_security_group",
+    "change": {
+      "actions": ["create"],
+      "after": {
+        "ingress": [
+          { "description": "internal", "from_port": 443, "to_port": 443, "protocol": "tcp", "cidr_blocks": ["10.0.0.0/16"] },
+        ],
+      },
+    },
+  },
+]
+
+variables = {
+  "aws_region": { "value": "us-east-1" },
+  "grafana_region": { "value": "us-east-1" },
+}
+
+configuration = {
+  "provider_config": {
+    "aws": {
+      "expressions": { "region": { "constant_value": "us-east-1" } },
+    },
+  },
+}
