@@ -1,34 +1,16 @@
-# Policy 2: no S3 bucket may allow public write.
+# No S3 bucket may allow public write.
 # Enforced via public access blocks, ACLs, and bucket policies.
 
 import "tfplan/v2" as tfplan
-import "strings"
 import "json"
-
-applied = filter tfplan.resource_changes as rc {
-	rc.mode is "managed" and
-		("create" in rc.change.actions or "update" in rc.change.actions)
-}
-
-# Public access blocks must block public ACLs and policies (the write paths).
-violating_access_blocks = filter applied as rc {
-	rc.type is "aws_s3_bucket_public_access_block" and
-		(rc.change.after.block_public_acls is not true or
-			rc.change.after.block_public_policy is not true)
-}
-
-# Bucket ACLs must never be public-read-write.
-violating_acls = filter applied as rc {
-	rc.type is "aws_s3_bucket_acl" and
-		rc.change.after.acl is "public-read-write"
-}
+import "common"
 
 write_actions = ["s3:PutObject", "s3:DeleteObject", "s3:PutBucketPolicy", "s3:PutBucketAcl", "s3:*"]
 
 action_allows_write = func(action) {
 	return action in write_actions or
-		strings.contains(action, "Put") or
-		strings.contains(action, "Delete")
+		common.str_contains(action, "Put") or
+		common.str_contains(action, "Delete")
 }
 
 principal_is_public = func(principal) {
@@ -45,8 +27,18 @@ principal_is_public = func(principal) {
 	return false
 }
 
-# Bucket policies must not grant write actions to public principals.
-violating_policies = filter applied as rc {
+violating_access_blocks = filter common.applied_changes as rc {
+	rc.type is "aws_s3_bucket_public_access_block" and
+		(rc.change.after.block_public_acls is not true or
+			rc.change.after.block_public_policy is not true)
+}
+
+violating_acls = filter common.applied_changes as rc {
+	rc.type is "aws_s3_bucket_acl" and
+		rc.change.after.acl is "public-read-write"
+}
+
+violating_policies = filter common.applied_changes as rc {
 	rc.type is "aws_s3_bucket_policy" and
 		rc.change.after.policy is not null and
 		any json.unmarshal(rc.change.after.policy).Statement as st {
@@ -58,24 +50,25 @@ violating_policies = filter applied as rc {
 		}
 }
 
-report = func() {
-	for violating_access_blocks as rc {
-		print("public-bucket violation:", rc.address, "does not fully block public ACLs/policies")
-	}
-	for violating_acls as rc {
-		print("public-bucket violation:", rc.address, "grants public write via ACL")
-	}
-	for violating_policies as rc {
-		print("public-bucket violation:", rc.address, "policy grants public write")
+violations = {}
+
+for violating_access_blocks as rc {
+	violations[rc.address] = "does not fully block public ACLs/policies"
+}
+for violating_acls as rc {
+	violations[rc.address] = "grants public write via ACL"
+}
+for violating_policies as rc {
+	violations[rc.address] = "bucket policy grants public write"
+}
+
+print_violations = func() {
+	for violations as address, msg {
+		print("public-bucket violation:", address, msg)
 	}
 	return true
 }
 
-report_rule = rule { report() }
-
 main = rule {
-	report_rule and
-	length(violating_access_blocks) is 0 and
-	length(violating_acls) is 0 and
-	length(violating_policies) is 0
+	print_violations() and length(violations) is 0
 }

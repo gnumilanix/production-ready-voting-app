@@ -1,10 +1,9 @@
-# Policy 1: only micro, small, and medium EC2 instance sizes are allowed.
+# Only micro, small, and medium EC2 instance sizes are allowed.
 # Covers standalone instances, launch templates, and EKS managed node groups.
-# (Karpenter NodePools live in Argo CD manifests, not the plan; the workflow
-# validates argo/karpenter/resources/nodepool.yaml separately.)
 
 import "tfplan/v2" as tfplan
 import "strings"
+import "common"
 
 allowed_sizes = ["micro", "small", "medium"]
 
@@ -16,24 +15,19 @@ instance_size = func(instance_type) {
 	return parts[1]
 }
 
-applied = filter tfplan.resource_changes as rc {
-	rc.mode is "managed" and
-		("create" in rc.change.actions or "update" in rc.change.actions)
-}
-
-violating_instances = filter applied as rc {
+violating_instances = filter common.applied_changes as rc {
 	rc.type is "aws_instance" and
 		rc.change.after.instance_type is not null and
 		instance_size(rc.change.after.instance_type) not in allowed_sizes
 }
 
-violating_templates = filter applied as rc {
+violating_templates = filter common.applied_changes as rc {
 	rc.type is "aws_launch_template" and
 		rc.change.after.instance_type is not null and
 		instance_size(rc.change.after.instance_type) not in allowed_sizes
 }
 
-violating_nodegroups = filter applied as rc {
+violating_nodegroups = filter common.applied_changes as rc {
 	rc.type is "aws_eks_node_group" and
 		rc.change.after.instance_types is not null and
 		any rc.change.after.instance_types as it {
@@ -41,24 +35,25 @@ violating_nodegroups = filter applied as rc {
 		}
 }
 
-report = func() {
-	for violating_instances as rc {
-		print("instance-size violation:", rc.address, rc.change.after.instance_type)
-	}
-	for violating_templates as rc {
-		print("instance-size violation:", rc.address, rc.change.after.instance_type)
-	}
-	for violating_nodegroups as rc {
-		print("instance-size violation:", rc.address, rc.change.after.instance_types)
+violations = {}
+
+for violating_instances as rc {
+	violations[rc.address] = rc.change.after.instance_type
+}
+for violating_templates as rc {
+	violations[rc.address] = rc.change.after.instance_type
+}
+for violating_nodegroups as rc {
+	violations[rc.address] = rc.change.after.instance_types
+}
+
+print_violations = func() {
+	for violations as address, value {
+		print("instance-size violation:", address, value)
 	}
 	return true
 }
 
-report_rule = rule { report() }
-
 main = rule {
-	report_rule and
-	length(violating_instances) is 0 and
-	length(violating_templates) is 0 and
-	length(violating_nodegroups) is 0
+	print_violations() and length(violations) is 0
 }

@@ -1,22 +1,10 @@
-# Policy 6: all resources must be deployed to us-east-1.
+# All resources must be deployed to us-east-1.
 # Checks resolved Terraform variables and any constant provider regions.
 
 import "tfplan/v2" as tfplan
-import "strings"
-
-str_contains = func(s, sub) {
-	return length(strings.split(s, sub)) > 1
-}
+import "common"
 
 required_region = "us-east-1"
-
-region_variables = filter tfplan.variables as name, variable {
-	str_contains(name, "region")
-}
-
-violating_variables = filter region_variables as name, variable {
-	variable.value is not required_region
-}
 
 # Safely read a constant region from a provider config, returning null when the
 # provider has no expressions (e.g. cloudinit) or no region entry.
@@ -35,29 +23,30 @@ constant_region = func(provider) {
 	return region["constant_value"]
 }
 
-aws_providers = filter tfplan.configuration.provider_config as pname, provider {
-	str_contains(pname, "aws")
-}
+violations = {}
 
-violating_providers = filter aws_providers as pname, provider {
-	constant_region(provider) is not null and
-		constant_region(provider) is not required_region
-}
-
-report = func() {
-	for violating_variables as name, variable {
-		print("region violation: variable", name, "=", variable.value, "(must be us-east-1)")
+for tfplan.variables as name, variable {
+	if common.str_contains(name, "region") and variable.value is not required_region {
+		violations["variable " + name] = "is " + string(variable.value) + " (must be us-east-1)"
 	}
-	for violating_providers as pname, provider {
-		print("region violation: provider", pname, "has constant region", provider.expressions.region.constant_value)
+}
+
+for tfplan.configuration.provider_config as pname, provider {
+	if common.str_contains(pname, "aws") {
+		region = constant_region(provider)
+		if region is not null and region is not required_region {
+			violations["provider " + pname] = "has constant region " + region + " (must be us-east-1)"
+		}
+	}
+}
+
+print_violations = func() {
+	for violations as subject, msg {
+		print("region violation:", subject, msg)
 	}
 	return true
 }
 
-report_rule = rule { report() }
-
 main = rule {
-	report_rule and
-	length(violating_variables) is 0 and
-	length(violating_providers) is 0
+	print_violations() and length(violations) is 0
 }
