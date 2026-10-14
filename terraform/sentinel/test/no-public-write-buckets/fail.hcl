@@ -4,7 +4,7 @@ import "module" "common" {
 
 mock "tfplan/v2" {
   module {
-    source = "../../testdata/mock-fail.sentinel"
+    source = "../../testdata/mock-public-bucket-policy-fail.sentinel"
   }
 }
 

@@ -8,23 +8,54 @@ import "common"
 write_actions = ["s3:PutObject", "s3:DeleteObject", "s3:PutBucketPolicy", "s3:PutBucketAcl", "s3:*"]
 
 action_allows_write = func(action) {
-	return action in write_actions or
+	return action is "*" or
+		action in write_actions or
 		common.str_contains(action, "Put") or
 		common.str_contains(action, "Delete")
 }
 
+principal_value_is_public = func(value) {
+	if value is "*" {
+		return true
+	}
+	if value is list {
+		return any value as item {
+			item is "*"
+		}
+	}
+	return false
+}
+
 principal_is_public = func(principal) {
-	if principal is "*" {
+	if principal_value_is_public(principal) {
 		return true
 	}
 	if principal is not null {
 		for principal as _, values {
-			if values is "*" {
+			if principal_value_is_public(values) {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+action_list = func(actions) {
+	if actions is null {
+		return []
+	}
+	if actions is string {
+		return [actions]
+	}
+	return actions
+}
+
+policy_statements = func(policy) {
+	statements = json.unmarshal(policy).Statement
+	if statements is list {
+		return statements
+	}
+	return [statements]
 }
 
 violating_access_blocks = filter common.applied_changes as rc {
@@ -35,16 +66,28 @@ violating_access_blocks = filter common.applied_changes as rc {
 
 violating_acls = filter common.applied_changes as rc {
 	rc.type is "aws_s3_bucket_acl" and
-		rc.change.after.acl is "public-read-write"
+		(rc.change.after.acl is "public-read-write" or
+			any (rc.change.after.access_control_policy else []) as policy {
+				any (policy.grant else []) as grant {
+					grant.permission in ["WRITE", "FULL_CONTROL"] and
+						any (grant.grantee else []) as grantee {
+							grantee.type is "Group" and
+								grantee.uri in [
+									"http://acs.amazonaws.com/groups/global/AllUsers",
+									"http://acs.amazonaws.com/groups/global/AuthenticatedUsers",
+								]
+						}
+				}
+			})
 }
 
 violating_policies = filter common.applied_changes as rc {
 	rc.type is "aws_s3_bucket_policy" and
 		rc.change.after.policy is not null and
-		any json.unmarshal(rc.change.after.policy).Statement as st {
+		any policy_statements(rc.change.after.policy) as st {
 			st.Effect is "Allow" and
 				principal_is_public(st.Principal) and
-				any (st.Action else []) as a {
+				any action_list(st.Action else []) as a {
 					action_allows_write(a)
 				}
 		}
