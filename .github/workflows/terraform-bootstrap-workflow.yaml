@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'terraform/bootstrap/**'
+      - '.github/workflows/terraform-bootstrap-workflow.yaml'
+      - '.github/actions/terraform-init/**'
   workflow_dispatch:
 
 permissions:
