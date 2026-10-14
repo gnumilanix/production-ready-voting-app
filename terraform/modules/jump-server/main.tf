@@ -66,7 +66,7 @@ resource "aws_key_pair" "jump_server" {
 
 resource "aws_instance" "jump_server" {
   ami                         = data.aws_ssm_parameter.amazon_linux_2023.value
-  instance_type               = "t3.micro"
+  instance_type               = "t3.small"
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [aws_security_group.jump_server.id]
   key_name                    = aws_key_pair.jump_server.key_name
