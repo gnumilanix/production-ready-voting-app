@@ -29,7 +29,10 @@ resource "aws_eks_addon" "managed" {
 
   cluster_name  = aws_eks_cluster.main.name
   addon_name    = each.key
-  addon_version = data.aws_eks_addon_version.managed[each.key].version
+  addon_version = coalesce(
+    try(local.eks_addon_version_overrides[each.key], null),
+    data.aws_eks_addon_version.managed[each.key].version
+  )
 
   tags = {
     Name = "${var.name}-${each.key}"

@@ -42,6 +42,13 @@ locals {
     "eks-pod-identity-agent"
   ])
 
+  # Pin addons whose latest build is broken. metrics-server v0.9.0-eksbuild.12
+  # serves an OpenAPI document the apiserver cannot encode as protobuf, which
+  # breaks Argo CD cluster-cache sync (argoproj/argo-cd#30220). eksbuild.11 works.
+  eks_addon_version_overrides = {
+    "metrics-server" = "v0.9.0-eksbuild.11"
+  }
+
   eks_addons_with_pod_identity = {
     "vpc-cni" = {
       role_key        = "vpc-cni"
