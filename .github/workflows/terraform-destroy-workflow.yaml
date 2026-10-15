@@ -107,7 +107,7 @@ jobs:
           region: ${{ vars.AWS_REGION }}
 
       - name: Download destroy plan
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: tfplan-destroy-deploy
           path: terraform/deploy/
