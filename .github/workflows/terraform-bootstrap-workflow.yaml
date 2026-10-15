@@ -100,7 +100,7 @@ jobs:
           kms_key_id: arn:aws:kms:${{ vars.AWS_REGION }}:365020425296:alias/voting-app-terraform-state
 
       - name: Download Plan Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: tfplan-bootstrap
           path: terraform/bootstrap/
