@@ -1,0 +1,57 @@
+version: 2
+updates:
+  # GitHub Actions used by the workflows in .github/workflows/
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Terraform providers/modules in bootstrap and deploy stacks
+  - package-ecosystem: terraform
+    directory: /terraform/bootstrap
+    schedule:
+      interval: weekly
+  - package-ecosystem: terraform
+    directory: /terraform/deploy
+    schedule:
+      interval: weekly
+
+  # Container base images
+  - package-ecosystem: docker
+    directory: /app/vote
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /app/result
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /app/worker
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /app/seed-data
+    schedule:
+      interval: weekly
+
+  # Python dependencies for the vote app
+  - package-ecosystem: pip
+    directory: /app/vote
+    schedule:
+      interval: weekly
+
+  # npm dependencies for the result app
+  - package-ecosystem: npm
+    directory: /app/result
+    schedule:
+      interval: weekly
+
+  # .NET dependencies for the worker app
+  - package-ecosystem: nuget
+    directory: /app/worker
+    schedule:
+      interval: weekly
