@@ -3,7 +3,10 @@
   hosts: all
   gather_facts: false
   vars:
-    gateway_api_version: v1.3.0
+    # Must match the Gateway API version the AWS Load Balancer Controller is
+    # built against (v3.6.0 targets Gateway API CRDs v1.6.0). A mismatch leaves
+    # the apiserver unable to serve/validate the controller's resources.
+    gateway_api_version: v1.6.0
   environment: "{{ eks_cluster_environment }}"
   tasks:
     - name: Configure installer kubeconfig
