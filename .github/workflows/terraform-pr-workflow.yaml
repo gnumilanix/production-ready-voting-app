@@ -104,6 +104,10 @@ jobs:
           key: ${{ matrix.state-key }}
           region: ${{ vars.AWS_REGION }}
 
+      - name: Generate plan-only SSH key for Dependabot
+        if: matrix.stack == 'deploy' && github.actor == 'dependabot[bot]'
+        run: bash "$GITHUB_WORKSPACE/.github/scripts/generate-plan-ssh-key.sh"
+
       - name: Terraform Plan
         run: terraform plan -input=false -out=tfplan
 
