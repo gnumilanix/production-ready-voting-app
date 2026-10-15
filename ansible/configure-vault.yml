@@ -3,7 +3,6 @@
   hosts: all
   gather_facts: false
   vars:
-    installer_kubeconfig: /tmp/voting-app-vault-kubeconfig
     vault_namespace: vault
     vault_pod: vault-0
     vault_address: http://127.0.0.1:8200
@@ -48,10 +47,7 @@
       path "secret/data/postgres-creds" {
         capabilities = ["read"]
       }
-  environment:
-    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
-    AWS_REGION: "{{ eks_cluster_region }}"
-    KUBECONFIG: "{{ installer_kubeconfig }}"
+  environment: "{{ eks_cluster_environment }}"
   tasks:
     - name: Configure installer kubeconfig
       ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml

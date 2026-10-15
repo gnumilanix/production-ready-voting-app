@@ -2,12 +2,7 @@
 - name: Install Argo CD applications
   hosts: all
   gather_facts: false
-  vars:
-    installer_kubeconfig: /tmp/voting-app-argocd-applications-kubeconfig
-  environment:
-    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
-    AWS_REGION: "{{ eks_cluster_region }}"
-    KUBECONFIG: "{{ installer_kubeconfig }}"
+  environment: "{{ eks_cluster_environment }}"
   tasks:
     - name: Configure installer kubeconfig
       ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml

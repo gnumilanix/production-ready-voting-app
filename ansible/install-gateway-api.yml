@@ -4,11 +4,7 @@
   gather_facts: false
   vars:
     gateway_api_version: v1.3.0
-    installer_kubeconfig: /tmp/voting-app-gateway-api-kubeconfig
-  environment:
-    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
-    AWS_REGION: "{{ eks_cluster_region }}"
-    KUBECONFIG: "{{ installer_kubeconfig }}"
+  environment: "{{ eks_cluster_environment }}"
   tasks:
     - name: Configure installer kubeconfig
       ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml

@@ -1,0 +1,12 @@
+---
+# Add (or refresh) a Helm chart repository.
+# Callers set helm_repo_name and helm_repo_url via vars on the import.
+- name: Add the {{ helm_repo_name }} Helm chart repository
+  ansible.builtin.command:
+    argv: [helm, repo, add, "{{ helm_repo_name }}", "{{ helm_repo_url }}", --force-update]
+  changed_when: false
+
+- name: Update the {{ helm_repo_name }} Helm chart repository
+  ansible.builtin.command:
+    argv: [helm, repo, update, "{{ helm_repo_name }}"]
+  changed_when: false

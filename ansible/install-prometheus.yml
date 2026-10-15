@@ -5,11 +5,7 @@
   vars:
     monitoring_namespace: monitoring
     prometheus_values_file: /tmp/voting-app-kube-prometheus-stack-values.yaml
-    installer_kubeconfig: /tmp/voting-app-prometheus-kubeconfig
-  environment:
-    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
-    AWS_REGION: "{{ eks_cluster_region }}"
-    KUBECONFIG: "{{ installer_kubeconfig }}"
+  environment: "{{ eks_cluster_environment }}"
   tasks:
     - name: Configure installer kubeconfig
       ansible.builtin.import_tasks: tasks/configure-installer-kubeconfig.yml
@@ -21,24 +17,10 @@
         mode: "0644"
 
     - name: Add the Prometheus community Helm chart repository
-      ansible.builtin.command:
-        argv:
-          - helm
-          - repo
-          - add
-          - prometheus-community
-          - https://prometheus-community.github.io/helm-charts
-          - --force-update
-      changed_when: false
-
-    - name: Update the Prometheus community Helm chart repository
-      ansible.builtin.command:
-        argv:
-          - helm
-          - repo
-          - update
-          - prometheus-community
-      changed_when: false
+      ansible.builtin.import_tasks: tasks/add-helm-repository.yml
+      vars:
+        helm_repo_name: prometheus-community
+        helm_repo_url: https://prometheus-community.github.io/helm-charts
 
     - name: Install or upgrade kube-prometheus-stack
       ansible.builtin.command:

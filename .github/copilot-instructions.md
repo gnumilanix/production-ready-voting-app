@@ -9,11 +9,7 @@ GitOps, HashiCorp Vault, Prometheus/Grafana, GitHub Actions CI/CD.
 - Region is always `us-east-1`; never introduce another region.
 - Terraform plan/validation locally: `AWS_PROFILE=terraform-user`.
 - Privileged AWS apply operations (IAM etc.): `AWS_PROFILE=bitbucket`.
-- AWS console CLI operations: `AWS_PROFILE=terraform-user`. Never rely on default profile.
-- When adding IAM policies, use iamlive to capture the exact API calls and
-  generate least-privilege policy statements instead of hand-writing broad
-  permissions. Run `iamlive` with `--output-file` against the workload, then
-  translate the captured actions into Terraform IAM resources.
+- AWS console CLI operations: `AWS_PROFILE=erraform-use`. Never rely on default profile.
 
 ## Git
 - Never `git push` automatically.
@@ -44,15 +40,6 @@ GitOps, HashiCorp Vault, Prometheus/Grafana, GitHub Actions CI/CD.
 - ansible/ansible.cfg sets SSH keepalives — long `helm --wait`/`kubectl wait`
   tasks depend on it; don't remove.
 - Jump server is t3.small; keep memory-heavy operations minimal.
-
-## Argo CD
-- Destroy flow: no sync windows. `argocd app delete` must use bare app names
-  (strip the `argocd/` prefix) or it fails with PermissionDenied (rc 20).
-- Karpenter resources (NodePool/NodeClaims/EC2NodeClass) are deleted via
-  kubectl before the Argo CD cascade delete.
-- NetworkPolicy enforcement is enabled on the VPC CNI (`enableNetworkPolicy`);
-  connectivity changes between voting app components require updating the
-  NetworkPolicies in argo/voting/.
 
 ## Coding conventions
 - Keep workflows clean: no heredoc Python or inline shell logic — extract

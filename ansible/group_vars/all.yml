@@ -1,0 +1,12 @@
+---
+# Shared values for all playbooks. Per skill guidance, values used by more
+# than one playbook live here instead of being hardcoded per play.
+
+# Single kubeconfig path used by every play that talks to the EKS cluster.
+installer_kubeconfig: /tmp/voting-app-installer-kubeconfig
+
+# AWS and kubeconfig environment for tasks that call AWS APIs or kubectl/helm.
+eks_cluster_environment:
+  AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
+  AWS_REGION: "{{ eks_cluster_region }}"
+  KUBECONFIG: "{{ installer_kubeconfig }}"

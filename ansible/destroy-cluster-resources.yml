@@ -2,12 +2,7 @@
 - name: Remove Kubernetes-managed AWS resources before Terraform teardown
   hosts: jump_server
   gather_facts: false
-  vars:
-    installer_kubeconfig: /tmp/voting-app-destroy-kubeconfig
-  environment:
-    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
-    AWS_REGION: "{{ eks_cluster_region }}"
-    KUBECONFIG: "{{ installer_kubeconfig }}"
+  environment: "{{ eks_cluster_environment }}"
   tasks:
     - name: Check whether the EKS cluster still exists
       ansible.builtin.command:

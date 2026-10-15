@@ -5,11 +5,7 @@
   vars:
     argocd_namespace: argocd
     argocd_values_file: /tmp/voting-app-argocd-values.yaml
-    installer_kubeconfig: /tmp/voting-app-argocd-kubeconfig
-  environment:
-    AWS_DEFAULT_REGION: "{{ eks_cluster_region }}"
-    AWS_REGION: "{{ eks_cluster_region }}"
-    KUBECONFIG: "{{ installer_kubeconfig }}"
+  environment: "{{ eks_cluster_environment }}"
   tasks:
     - name: Install Argo CD CLI
       ansible.builtin.import_tasks: tasks/install-argocd-cli.yml
@@ -24,24 +20,10 @@
         mode: "0644"
 
     - name: Add the Argo Helm chart repository
-      ansible.builtin.command:
-        argv:
-          - helm
-          - repo
-          - add
-          - argo
-          - https://argoproj.github.io/argo-helm
-          - --force-update
-      changed_when: false
-
-    - name: Update the Argo Helm chart repository
-      ansible.builtin.command:
-        argv:
-          - helm
-          - repo
-          - update
-          - argo
-      changed_when: false
+      ansible.builtin.import_tasks: tasks/add-helm-repository.yml
+      vars:
+        helm_repo_name: argo
+        helm_repo_url: https://argoproj.github.io/argo-helm
 
     - name: Install or upgrade Argo CD
       ansible.builtin.command:
