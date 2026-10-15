@@ -112,7 +112,7 @@ jobs:
         run: terraform plan -input=false -out=tfplan
 
       - name: Setup Sentinel
-        uses: hashicorp/setup-sentinel@79f4f0c293a3f625c0cb2edc3d6c759a42670463
+        uses: hashicorp/setup-sentinel@d6d917e67e47db94602f55ddcb991f2a90c68615
         with:
           version: ${{ env.SENTINEL_VERSION }}
 
