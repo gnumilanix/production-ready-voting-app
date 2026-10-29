@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="StackExchange.Redis" Version="3.4.5" />
+    <PackageReference Include="StackExchange.Redis" Version="3.4.20" />
     <PackageReference Include="Npgsql" Version="9.0.5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
